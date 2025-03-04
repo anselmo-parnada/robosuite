@@ -12,7 +12,7 @@ from robosuite.wrappers import Wrapper
 
 
 class GymWrapper(Wrapper, gym.Env):
-    metadata = None
+    metadata = {}
     render_mode = None
     """
     Initializes the Gym wrapper. Mimics many of the required functionalities of the Wrapper class
@@ -64,6 +64,10 @@ class GymWrapper(Wrapper, gym.Env):
         self.observation_space = spaces.Box(low, high)
         low, high = self.env.action_spec
         self.action_space = spaces.Box(low, high)
+
+        self.render_mode = env.render_mode
+        self.metadata["render_fps"] = env.control_freq
+        self.metadata["render_modes"] = ("human", "rgb_array", None)
 
     def _flatten_obs(self, obs_dict, verbose=False):
         """
@@ -132,3 +136,6 @@ class GymWrapper(Wrapper, gym.Env):
         """
         # Dummy args used to mimic Wrapper interface
         return self.env.reward()
+
+    def close(self):
+        self.env.close()
