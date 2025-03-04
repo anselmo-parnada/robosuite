@@ -211,7 +211,7 @@ class DomainRandomizationWrapper(Wrapper):
         if self.randomize_on_reset:
             # domain randomize + regenerate observation
             self.randomize_domain()
-            ret = self.env._get_observations()
+            ret = self.env._get_observations(force_update=True)
 
         return ret
 
