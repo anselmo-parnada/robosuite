@@ -1,0 +1,44 @@
+<mujoco model="peg_5_gripper">
+    <asset>
+        <mesh name="m_peg" file="meshes/peg_gripper/peg_5.STL" />
+    </asset>
+    <worldbody>
+        <body name="gripper" pos="0 0 0">
+
+            <camera name="gripper_cam" pos="0.062 0 -0.012" quat="0.271 0.653 0.653 0.271" fovy="59"/>
+            <!-- <camera name="gripper_cam" pos="0.055 0 -0.005" quat="0.271 0.653 0.653 0.271" fovy="60"/> -->
+            <!-- <site name="ft_frame" pos="0 0 0" size="0.01 0.01 0.01" rgba="1 0 0 1" type="sphere" group="1"/> -->
+            <inertial pos="0 0 0" mass="3e-1" diaginertia="1e-2 1e-2 1e-2" />
+            <!-- This site was added for visualization. -->
+            <body name="eef" pos="0 0 0.053" quat="1 0 0 0">
+                <site name="grip_site" pos="0 0 0" size="0.01 0.01 0.01" rgba="1 0 0 0.5" type="sphere" group="1"/>
+                <site name="ee_x" pos="0.1 0 0" size="0.005 .1"  quat="0.707105  0 0.707108 0 " rgba="1 0 0 .1" type="cylinder" group="1"/>
+                <site name="ee_y" pos="0 0.1 0" size="0.005 .1" quat="0.707105 0.707108 0 0" rgba="0 1 0 .1" type="cylinder" group="1"/>
+                <site name="ee_z" pos="0 0 0.1" size="0.005 .1" quat="1 0 0 0" rgba="0 0 1 .1" type="cylinder" group="1"/>
+                <!-- This site was added for visualization. -->
+                <site name="grip_site_cylinder" pos="0 0 0" size="0.005 10" rgba="0 1 0 0.1" type="cylinder" group="1"/>
+            </body>
+            <body name="peg" quat="0 0 0 1">
+                <inertial pos="0 0 0" mass="0.0001" diaginertia="0 0 0" />
+                <geom name="tool_base_viz" pos="0 0 0.0015" size="0.03 .0015" quat="1 0 0 0" rgba="0.5 0.5 0.5 1" type="cylinder" contype="0" conaffinity="0" group="1"/>
+                <body name="mesh_viz_dummy" pos="0 0 0.003">
+                    <geom name="peg_viz" type="mesh" mesh="m_peg" rgba="0.5 0.5 0.5 1" contype="0" conaffinity="0" group="1"/>
+                </body>
+                <body name="dummy_body" pos="0.0 0 0" >
+                    <inertial pos="0 0 0" mass="0.0001" diaginertia="0 0 0" />
+                    <geom name="tool_base_collision" pos="0 0 0.0015" size="0.03 .0015" quat="1 0 0 0" rgba="0 0 1 1" type="cylinder" group="0" friction="0.0 0.005 0.0001"/>
+                    <body name="mesh_collision_dummy" pos="0 0 0.003">
+                        <inertial pos="0 0 0" mass="0.0001" diaginertia="0 0 0" />
+                        <geom name="peg_collision" type="mesh" mesh="m_peg" rgba="0 0 1 1" group="0" friction="0.0 0.005 0.0001"/>
+                        <site name="ft_frame" pos="0 0 -0.003" size="0.01 0.01 0.01" rgba="1 0 0 0.1" type="sphere" group="1" quat="0 0 0 1"/>
+                    </body>
+                    <site name="eef_tip_site" size="0.01" rgba="1 0 0 0.1" type="sphere" />
+                </body>
+            </body>
+        </body>
+    </worldbody>
+    <sensor>
+        <force name="force_ee" site="ft_frame"/>
+        <torque name="torque_ee" site="ft_frame"/>
+    </sensor>
+</mujoco>
