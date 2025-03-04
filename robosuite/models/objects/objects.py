@@ -2,6 +2,8 @@ import copy
 import xml.etree.ElementTree as ET
 from copy import deepcopy
 
+import numpy as np
+
 import robosuite.macros as macros
 from robosuite.models.base import MujocoModel, MujocoXML
 from robosuite.utils.mjcf_utils import (
