@@ -313,7 +313,7 @@ def mat2pose(hmat):
     return pos, orn
 
 
-@jit_decorator
+# @jit_decorator
 def mat2quat(rmat):
     """
     Converts given rotation matrix to quaternion.
@@ -458,7 +458,7 @@ def pose2mat(pose):
     return homo_pose_mat
 
 
-@jit_decorator
+# @jit_decorator
 def quat2mat(quaternion):
     """
     Converts given quaternion to matrix.
@@ -915,7 +915,7 @@ def get_pose_error(target_pose, current_pose):
     return error
 
 
-@jit_decorator
+# @jit_decorator
 def matrix_inverse(matrix):
     """
     Helper function to have an efficient matrix inversion function.
