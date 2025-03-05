@@ -10,6 +10,7 @@ ALL_ROBOTS = REGISTERED_ROBOTS.keys()
 ROBOT_CLASS_MAPPING = {
     "Baxter": Bimanual,
     "IIWA": SingleArm,
+    "IIWA14": SingleArm,
     "Jaco": SingleArm,
     "Kinova3": SingleArm,
     "Panda": SingleArm,
