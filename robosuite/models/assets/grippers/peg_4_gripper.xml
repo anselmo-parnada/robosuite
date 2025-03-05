@@ -1,16 +1,13 @@
 <mujoco model="peg_4_gripper">
     <asset>
-        <mesh name="m_peg" file="meshes/peg_gripper/peg_4.STL" />
+        <mesh name="peg_head" file="meshes/peg_gripper/peg_4_head.STL" />
+        <mesh name="headless_peg_and_camera" file="meshes/peg_gripper/headless_peg_and_camera.STL" />
+        <mesh name="ft_sensor" file="meshes/peg_gripper/ft_sensor.STL" />
     </asset>
     <worldbody>
         <body name="gripper" pos="0 0 0">
-
-            <camera name="gripper_cam" pos="0.062 0 -0.012" quat="0.271 0.653 0.653 0.271" fovy="59"/>
-            <!-- <camera name="gripper_cam" pos="0.055 0 -0.005" quat="0.271 0.653 0.653 0.271" fovy="60"/> -->
-            <!-- <site name="ft_frame" pos="0 0 0" size="0.01 0.01 0.01" rgba="1 0 0 1" type="sphere" group="1"/> -->
-            <inertial pos="0 0 0" mass="3e-1" diaginertia="1e-2 1e-2 1e-2" />
             <!-- This site was added for visualization. -->
-            <body name="eef" pos="0 0 0.053" quat="1 0 0 0">
+            <body name="eef" pos="0 0 0.0995" quat="1 0 0 0">
                 <site name="grip_site" pos="0 0 0" size="0.01 0.01 0.01" rgba="1 0 0 0.5" type="sphere" group="1"/>
                 <site name="ee_x" pos="0.1 0 0" size="0.005 .1"  quat="0.707105  0 0.707108 0 " rgba="1 0 0 .1" type="cylinder" group="1"/>
                 <site name="ee_y" pos="0 0.1 0" size="0.005 .1" quat="0.707105 0.707108 0 0" rgba="0 1 0 .1" type="cylinder" group="1"/>
@@ -18,21 +15,18 @@
                 <!-- This site was added for visualization. -->
                 <site name="grip_site_cylinder" pos="0 0 0" size="0.005 10" rgba="0 1 0 0.1" type="cylinder" group="1"/>
             </body>
-            <body name="peg" quat="0 0 0 1">
-                <inertial pos="0 0 0" mass="0.0001" diaginertia="0 0 0" />
-                <geom name="tool_base_viz" pos="0 0 0.0015" size="0.03 .0015" quat="1 0 0 0" rgba="0.5 0.5 0.5 1" type="cylinder" contype="0" conaffinity="0" group="1"/>
-                <body name="mesh_viz_dummy" pos="0 0 0.003">
-                    <geom name="peg_viz" type="mesh" mesh="m_peg" rgba="0.5 0.5 0.5 1" contype="0" conaffinity="0" group="1"/>
-                </body>
-                <body name="dummy_body" pos="0.0 0 0" >
-                    <inertial pos="0 0 0" mass="0.0001" diaginertia="0 0 0" />
-                    <geom name="tool_base_collision" pos="0 0 0.0015" size="0.03 .0015" quat="1 0 0 0" rgba="0 0 1 1" type="cylinder" group="0" friction="0.0 0.005 0.0001"/>
-                    <body name="mesh_collision_dummy" pos="0 0 0.003">
-                        <inertial pos="0 0 0" mass="0.0001" diaginertia="0 0 0" />
-                        <geom name="peg_collision" type="mesh" mesh="m_peg" rgba="0 0 1 1" group="0" friction="0.0 0.005 0.0001"/>
-                        <site name="ft_frame" pos="0 0 -0.003" size="0.01 0.01 0.01" rgba="1 0 0 0.1" type="sphere" group="1" quat="0 0 0 1"/>
-                    </body>
-                    <site name="eef_tip_site" size="0.01" rgba="1 0 0 0.1" type="sphere" />
+            <body name="ft_sensor" quat="1 0 0 0">
+                <inertial pos="0.00005 0.00000 0.01664" mass="0.245" diaginertia="0.00010 0.00011 0.00015" />
+                <geom type="mesh" name="ft_sensor_viz" rgba="0.5 0.5 0.5 1" contype="0" conaffinity="0" group="1" mesh="ft_sensor"/>
+                <geom type="mesh" name="ft_sensor_collision" rgba="0 0 1 1" contype="0" mesh="ft_sensor"/>
+                <site name="ft_frame" pos="0 0 0.0375" size="0.0001 0.0001 0.0001" rgba="1 0 0 0.1" type="sphere" group="1" quat="0 0 0 1"/>
+                <body name="peg_and_camera" pos="0 0 0.0375" quat="1 0 0 0">
+                    <inertial pos="0.04835 0.01068 -0.00317" mass="0.14730" diaginertia="0.00011 0.00020 0.00024" />
+                    <camera name="gripper_cam" pos="0.06207 0 0.0" quat="0.271 0.653 0.653 0.271" fovy="59"/>
+                    <geom type="mesh" name="headless_peg_and_camera_viz" rgba="0.5 0.5 0.5 1" contype="0" conaffinity="0" group="1" mesh="headless_peg_and_camera"/>
+                    <geom type="mesh" name="headless_peg_and_camera_collision" rgba="0 0 1 1" contype="0" group="0" mesh="headless_peg_and_camera"/>
+                    <geom type="mesh" name="peg_head_viz" pos="0 0 0.012" rgba="0.5 0.5 0.5 1" contype="0" conaffinity="0" group="1" mesh="peg_head" friction="0.0 0.005 0.0001" />
+                    <geom type="mesh" name="peg_head_collision" pos="0 0 0.012" rgba="0 0 1 1" contype="0" group="0" mesh="peg_head" friction="0.0 0.005 0.0001"/>
                 </body>
             </body>
         </body>
