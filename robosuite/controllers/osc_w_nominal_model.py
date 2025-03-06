@@ -282,7 +282,7 @@ class OSCWithNominalModel(OperationalSpaceController):
 
         # Always run superclass call for any cleanups at the end
         self.torques = self.torque_filter(torques)
-        super().run_controller()
+        super(OperationalSpaceController, self).run_controller()
 
         return self.torques
 
