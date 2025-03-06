@@ -277,7 +277,7 @@ class OSCWithNominalModel(OperationalSpaceController):
         # Note: Gamma_null = desired nullspace pose torques, assumed to be positional joint control relative
         #                     to the initial joint positions
         torques += nullspace_torques(
-            self.mass_matrix, self.nominal_robot_model.nullspace_matrix, self.initial_joint, self.joint_pos, self.joint_vel
+            self.mass_matrix, self.nominal_robot_model.nullspace_matrix, self.initial_joint, self.q, self.qd
         )
 
         # Always run superclass call for any cleanups at the end
