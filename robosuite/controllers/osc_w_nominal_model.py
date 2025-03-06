@@ -129,6 +129,21 @@ class OSCWithNominalModel(OperationalSpaceController):
         nominal_model_urdf_fp=None,
         **kwargs,  # does nothing; used so no error raised when dict is passed with extra terms used previously
     ):
+        self.model_timestep = macros.SIMULATION_TIMESTEP
+        
+        assert nominal_model_urdf_fp is not None, "Must provide a nominal model URDF filepath for OSCWithNominalModel"
+        self.nominal_robot_model = RoboDynamicsModel(nominal_model_urdf_fp, "lbr_link_tcp")
+        
+        self.torque_filter = LowPassFilter(100.0, self.model_timestep)
+
+        self.joint_pos_filter = LowPassFilter(100.0, self.model_timestep)
+
+        self.joint_vel_eul_diff = BackwardEulerDiff(self.model_timestep)
+        self.joint_vel_filter = LowPassFilter(100.0, self.model_timestep)
+
+        self.joint_accel = None
+        self.joint_accel_eul_diff = BackwardEulerDiff(self.model_timestep)
+        self.joint_accel_filter = LowPassFilter(100.0, self.model_timestep)
 
         super().__init__(
             sim,
