@@ -292,6 +292,16 @@ class OSCWithNominalModel(OperationalSpaceController):
 
         return torques # self.torques
 
+    # @property
+    # def torque_compensation(self):
+    #     """
+    #     Gravity compensation for this robot arm
+
+    #     Returns:
+    #         np.array: torques
+    #     """
+    #     return self.nominal_robot_model.coriolis_matrix @ self.qd + self.nominal_robot_model.torque_gravity
+
     @property
     def name(self):
         return "OSC_NOMINAL_MODEL_" + self.name_suffix
