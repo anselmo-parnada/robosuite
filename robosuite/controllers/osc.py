@@ -352,10 +352,7 @@ class OperationalSpaceController(Controller):
         )
 
         # Always run superclass call for any cleanups at the end
-        if self.torques is None:
-            self.torques = torques
-        else:
-            self.torques = 0.9 * self.torques + 0.1 * torques
+        self.torques = torques
         super().run_controller()
 
         return self.torques
