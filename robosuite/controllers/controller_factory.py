@@ -7,6 +7,8 @@ from copy import deepcopy
 
 import numpy as np
 
+from robosuite.controllers.osc_w_nominal_model import OSCWithNominalModel
+
 from .interpolators.linear_interpolator import LinearInterpolator
 from .joint_pos import JointPositionController
 from .joint_tor import JointTorqueController
@@ -127,6 +129,15 @@ def controller_factory(name, params):
             ori_interpolator.set_states(ori="euler")
         params["control_ori"] = True
         return OperationalSpaceController(interpolator_pos=interpolator, interpolator_ori=ori_interpolator, **params)
+    
+    if name == "OSC_NOMINAL_MODEL_POSE":
+        ori_interpolator = None
+        if interpolator is not None:
+            interpolator.set_states(dim=3)  # EE control uses dim 3 for pos and ori each
+            ori_interpolator = deepcopy(interpolator)
+            ori_interpolator.set_states(ori="euler")
+        params["control_ori"] = True
+        return OSCWithNominalModel(interpolator_pos=interpolator, interpolator_ori=ori_interpolator, **params)
 
     if name == "OSC_POSITION":
         if interpolator is not None:
