@@ -104,7 +104,6 @@ class OSCWithNominalModel(OperationalSpaceController):
 
     def __init__(
         self,
-        nominal_model_urdf_fp,
         sim,
         eef_name,
         joint_indexes,
@@ -126,6 +125,7 @@ class OSCWithNominalModel(OperationalSpaceController):
         control_ori=True,
         control_delta=True,
         uncouple_pos_ori=True,
+        nominal_model_urdf_fp=None,
         **kwargs,  # does nothing; used so no error raised when dict is passed with extra terms used previously
     ):
 
@@ -154,6 +154,7 @@ class OSCWithNominalModel(OperationalSpaceController):
             **kwargs,
         )
 
+        assert nominal_model_urdf_fp is not None, "Must provide a nominal model URDF filepath for OSCWithNominalModel"
         self.nominal_robot_model = RobotModel(nominal_model_urdf_fp, eef_name)
 
     def update(self, force=False):
