@@ -195,24 +195,16 @@ class OSCWithNominalModel(OperationalSpaceController):
 
             self.nominal_robot_model.update_model(self.q, self.qd, self.qdd)
 
+            self.J_pos = self.nominal_robot_model.J_pos
+            self.J_ori = self.nominal_robot_model.J_ori
+            self.J_full = self.nominal_robot_model.J_full
+
             self.ee_pos = self.nominal_robot_model.ee_pos
-            self.ee_ori_mat = np.array(
-                self.sim.data.site_xmat[self.sim.model.site_name2id(self.eef_name)].reshape([3, 3])
-            )
-            self.ee_pos_vel = np.array(self.sim.data.get_site_xvelp(self.eef_name))
-            self.ee_ori_vel = np.array(self.sim.data.get_site_xvelr(self.eef_name))
+            self.ee_ori_mat = self.nominal_robot_model.ee_ori
+            self.ee_pos_vel = self.J_pos @ self.qd
+            self.ee_ori_vel = self.J_ori @ self.qd
 
-            self.joint_pos = np.array(self.sim.data.qpos[self.qpos_index])
-            self.joint_vel = np.array(self.sim.data.qvel[self.qvel_index])
-
-            self.J_pos = np.array(self.sim.data.get_site_jacp(self.eef_name).reshape((3, -1))[:, self.qvel_index])
-            self.J_ori = np.array(self.sim.data.get_site_jacr(self.eef_name).reshape((3, -1))[:, self.qvel_index])
-            self.J_full = np.array(np.vstack([self.J_pos, self.J_ori]))
-
-            mass_matrix = np.ndarray(shape=(self.sim.model.nv, self.sim.model.nv), dtype=np.float64, order="C")
-            mujoco.mj_fullM(self.sim.model._model, mass_matrix, self.sim.data.qM)
-            mass_matrix = np.reshape(mass_matrix, (len(self.sim.data.qvel), len(self.sim.data.qvel)))
-            self.mass_matrix = mass_matrix[self.qvel_index, :][:, self.qvel_index]
+            self.mass_matrix = self.nominal_robot_model.mass_matrix
 
             # Clear self.new_update
             self.new_update = False
@@ -269,19 +261,14 @@ class OSCWithNominalModel(OperationalSpaceController):
             vel_ori_error, self.kd[3:6]
         )
 
-        # Compute nullspace matrix (I - Jbar * J) and lambda matrices ((J * M^-1 * J^T)^-1)
-        lambda_full, lambda_pos, lambda_ori, nullspace_matrix = opspace_matrices(
-            self.mass_matrix, self.J_full, self.J_pos, self.J_ori
-        )
-
         # Decouples desired positional control from orientation control
         if self.uncoupling:
-            decoupled_force = np.dot(lambda_pos, desired_force)
-            decoupled_torque = np.dot(lambda_ori, desired_torque)
+            decoupled_force = np.dot(self.nominal_robot_model.lambda_pos, desired_force)
+            decoupled_torque = np.dot(self.nominal_robot_model.lambda_ori, desired_torque)
             decoupled_wrench = np.concatenate([decoupled_force, decoupled_torque])
         else:
             desired_wrench = np.concatenate([desired_force, desired_torque])
-            decoupled_wrench = np.dot(lambda_full, desired_wrench)
+            decoupled_wrench = np.dot(self.nominal_robot_model.lambda_full, desired_wrench)
 
         # Gamma (without null torques) = J^T * F + gravity compensations
         torques = np.dot(self.J_full.T, decoupled_wrench) + self.torque_compensation
@@ -290,7 +277,7 @@ class OSCWithNominalModel(OperationalSpaceController):
         # Note: Gamma_null = desired nullspace pose torques, assumed to be positional joint control relative
         #                     to the initial joint positions
         torques += nullspace_torques(
-            self.mass_matrix, nullspace_matrix, self.initial_joint, self.joint_pos, self.joint_vel
+            self.mass_matrix, self.nominal_robot_model.nullspace_matrix, self.initial_joint, self.joint_pos, self.joint_vel
         )
 
         # Always run superclass call for any cleanups at the end
@@ -301,4 +288,4 @@ class OSCWithNominalModel(OperationalSpaceController):
 
     @property
     def name(self):
-        return "OSC_" + self.name_suffix
+        return "OSC_NOMINAL_MODEL" + self.name_suffix
