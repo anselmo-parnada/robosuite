@@ -288,4 +288,4 @@ class OSCWithNominalModel(OperationalSpaceController):
 
     @property
     def name(self):
-        return "OSC_NOMINAL_MODEL" + self.name_suffix
+        return "OSC_NOMINAL_MODEL_" + self.name_suffix
