@@ -3,6 +3,19 @@ import numpy as np
 import robosuite.utils.transform_utils as trans
 from robosuite.utils.numba import jit_decorator
 
+@jit_decorator
+def inverse_cholesky(A):
+    # Perform Cholesky decomposition
+    L = np.linalg.cholesky(A)
+    
+    # Solve for Y (L Y = I)
+    I = np.eye(A.shape[0])
+    Y = np.linalg.solve(L, I)
+    
+    # Solve for X (L^T X = Y)
+    X = np.linalg.solve(L.T, Y)
+    
+    return X
 
 @jit_decorator
 def nullspace_torques(mass_matrix, nullspace_matrix, initial_joint, joint_pos, joint_vel, joint_kp=10):
