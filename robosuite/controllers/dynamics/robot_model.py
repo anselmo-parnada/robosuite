@@ -2,23 +2,19 @@ import tempfile
 from copy import deepcopy
 import numpy as np
 from urdf_parser_py.urdf import URDF 
-import pinocchio
+import pinocchio # type: ignore
 
 from robosuite.utils.control_utils import inverse_cholesky
 import robosuite.utils.transform_utils as T
 
 class RobotModel:
-    def __init__(self, urdf_str, ee_link):
-        self.parsed_urdf_model = URDF.from_xml_string(urdf_str) # parsed urdf model for convenience
-
-        with tempfile.NamedTemporaryFile(mode='wb', delete=True, suffix=".urdf") as temp_file:
-            temp_file.write(urdf_str)
-            temp_file.flush()
-
-            self.model, _, _ = pinocchio.buildModelsFromUrdf(
-                filename=temp_file.name,
-            )
+    def __init__(self, urdf_fp, ee_link):
+        self.parsed_urdf_model = URDF.from_xml_file(urdf_fp) # parsed urdf model for convenience
         
+        self.model, _, _ = pinocchio.buildModelsFromUrdf(
+            filename=urdf_fp,
+        )
+
         # self.model.gravity.setZero()
         self.data = self.model.createData()
         self.ee_link_frame_id = self.model.getFrameId(ee_link)
