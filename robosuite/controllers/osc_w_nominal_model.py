@@ -188,13 +188,16 @@ class OSCWithNominalModel(OperationalSpaceController):
             self.sim.forward()
 
             self.joint_pos = np.array(self.sim.data.qpos[self.qpos_index])
-            self.q = self.joint_pos_filter(self.joint_pos)
+            # self.q = self.joint_pos_filter(self.joint_pos)
+            self.q = np.array(self.sim.data.qpos[self.qpos_index])
 
-            self.joint_vel = self.joint_vel_eul_diff(self.joint_pos)
-            self.qd = self.joint_vel_filter(self.joint_vel)
+            # self.joint_vel = self.joint_vel_eul_diff(self.joint_pos)
+            # self.qd = self.joint_vel_filter(self.joint_vel)
+            self.qd = np.array(self.sim.data.qvel[self.qvel_index])
 
-            self.joint_accel = self.joint_accel_eul_diff(self.joint_vel)
-            self.qdd = self.joint_accel_filter(self.joint_accel)
+            # self.joint_accel = self.joint_accel_eul_diff(self.joint_vel)
+            # self.qdd = self.joint_acc_filter(self.joint_accel)
+            self.qdd = np.array(self.sim.data.qacc[self.qvel_index])
 
             self.nominal_robot_model.update_model(self.q, self.qd, self.qdd)
 
