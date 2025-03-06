@@ -3,7 +3,7 @@ import math
 import mujoco
 import numpy as np
 
-from robosuite.controllers.dynamics.robot_model import RoboDynamicsModel
+from robosuite.controllers.dynamics.robot_dynamics_model import RoboDynamicsModel
 from robosuite.controllers.osc import OperationalSpaceController
 from robosuite.utils.signal_processing_utils import BackwardEulerDiff, LowPassFilter
 import robosuite.utils.transform_utils as T
