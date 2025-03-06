@@ -17,7 +17,7 @@ USING_INSTANCE_RANDOMIZATION = False
 
 # Numba settings
 # TODO: Numba causes BSOD for NutAssembly task when rendering offscreen (deterministically!)
-ENABLE_NUMBA = False
+ENABLE_NUMBA = True
 CACHE_NUMBA = True
 
 # Image Convention
@@ -32,7 +32,7 @@ IMAGE_CONVENTION = "opengl"  # Options are {"opengl", "opencv"}
 # so we skip concatenating all images together by default, unless this flag is set to True
 CONCATENATE_IMAGES = False
 
-MUJOCO_GPU_RENDERING = False
+MUJOCO_GPU_RENDERING = True
 
 # Spacemouse settings. Used by SpaceMouse class in robosuite/devices/spacemouse.py
 SPACEMOUSE_VENDOR_ID = 9583
