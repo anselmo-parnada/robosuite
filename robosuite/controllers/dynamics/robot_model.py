@@ -7,7 +7,7 @@ import pinocchio # type: ignore
 from robosuite.utils.control_utils import inverse_cholesky
 import robosuite.utils.transform_utils as T
 
-class RobotModel:
+class RoboDynamicsModel:
     def __init__(self, urdf_fp, ee_link):
         self.parsed_urdf_model = URDF.from_xml_file(urdf_fp) # parsed urdf model for convenience
         

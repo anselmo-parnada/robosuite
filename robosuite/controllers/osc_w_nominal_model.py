@@ -3,8 +3,8 @@ import math
 import mujoco
 import numpy as np
 
+from robosuite.controllers.dynamics.robot_model import RoboDynamicsModel
 from robosuite.controllers.osc import OperationalSpaceController
-from robosuite.models.robots.robot_model import RobotModel
 from robosuite.utils.signal_processing_utils import BackwardEulerDiff, LowPassFilter
 import robosuite.utils.transform_utils as T
 from robosuite.utils.control_utils import *
@@ -156,7 +156,7 @@ class OSCWithNominalModel(OperationalSpaceController):
         )
 
         assert nominal_model_urdf_fp is not None, "Must provide a nominal model URDF filepath for OSCWithNominalModel"
-        self.nominal_robot_model = RobotModel(nominal_model_urdf_fp, "lbr_link_tcp")
+        self.nominal_robot_model = RoboDynamicsModel(nominal_model_urdf_fp, "lbr_link_tcp")
         self.torque_filter = LowPassFilter(100.0, self.model_timestep)
 
         self.joint_pos_filter = LowPassFilter(100.0, self.model_timestep)
@@ -195,7 +195,7 @@ class OSCWithNominalModel(OperationalSpaceController):
 
             self.nominal_robot_model.update_model(self.q, self.qd, self.qdd)
 
-            self.ee_pos = np.array(self.sim.data.site_xpos[self.sim.model.site_name2id(self.eef_name)])
+            self.ee_pos = self.nominal_robot_model.ee_pos
             self.ee_ori_mat = np.array(
                 self.sim.data.site_xmat[self.sim.model.site_name2id(self.eef_name)].reshape([3, 3])
             )
