@@ -43,6 +43,15 @@ class RoboDynamicsModel:
         pinocchio.forwardKinematics(self.model, self.data, q)
         pinocchio.updateFramePlacements(self.model, self.data)
 
+        self.compute_eef_pose(q)
+        self.compute_eef_jacobian(q)
+        self.compute_mass_matrix(q)
+        self.compute_coriolis_matrix(q, qd)
+        self.compute_gravity_torque(q)
+        self.compute_operational_space_matrices()
+        self.compute_inertia_weight_jac_psuedo_inv()
+        self.compute_nullspace_matrix()
+
     def compute_eef_pose(self, q):
         eef_se3 = self.data.oMf[self.ee_link_frame_id]
         self.ee_pos[:] = eef_se3.translation[:]
