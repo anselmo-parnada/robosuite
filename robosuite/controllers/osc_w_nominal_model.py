@@ -5,6 +5,7 @@ import numpy as np
 
 from robosuite.controllers.osc import OperationalSpaceController
 from robosuite.models.robots.robot_model import RobotModel
+from robosuite.utils.signal_processing_utils import BackwardEulerDiff, LowPassFilter
 import robosuite.utils.transform_utils as T
 from robosuite.utils.control_utils import *
 
@@ -155,7 +156,17 @@ class OSCWithNominalModel(OperationalSpaceController):
         )
 
         assert nominal_model_urdf_fp is not None, "Must provide a nominal model URDF filepath for OSCWithNominalModel"
-        self.nominal_robot_model = RobotModel(nominal_model_urdf_fp, eef_name)
+        self.nominal_robot_model = RobotModel(nominal_model_urdf_fp, "lbr_link_tcp")
+        self.torque_filter = LowPassFilter(100.0, self.model_timestep)
+
+        self.joint_pos_filter = LowPassFilter(100.0, self.model_timestep)
+
+        self.joint_vel_eul_diff = BackwardEulerDiff(self.model_timestep)
+        self.joint_vel_filter = LowPassFilter(100.0, self.model_timestep)
+
+        self.joint_accel = None
+        self.joint_accel_eul_diff = BackwardEulerDiff(self.model_timestep)
+        self.joint_accel_filter = LowPassFilter(100.0, self.model_timestep)
 
     def update(self, force=False):
         """
@@ -172,6 +183,17 @@ class OSCWithNominalModel(OperationalSpaceController):
         # Only run update if self.new_update or force flag is set
         if self.new_update or force:
             self.sim.forward()
+
+            self.joint_pos = np.array(self.sim.data.qpos[self.qpos_index])
+            self.q = self.joint_pos_filter(self.joint_pos)
+
+            self.joint_vel = self.joint_vel_eul_diff(self.joint_pos)
+            self.qd = self.joint_vel_filter(self.joint_vel)
+
+            self.joint_accel = self.joint_accel_eul_diff(self.joint_vel)
+            self.qdd = self.joint_accel_filter(self.joint_accel)
+
+            self.nominal_robot_model.update_model(self.q, self.qd, self.qdd)
 
             self.ee_pos = np.array(self.sim.data.site_xpos[self.sim.model.site_name2id(self.eef_name)])
             self.ee_ori_mat = np.array(
@@ -272,10 +294,7 @@ class OSCWithNominalModel(OperationalSpaceController):
         )
 
         # Always run superclass call for any cleanups at the end
-        if self.torques is None:
-            self.torques = torques
-        else:
-            self.torques = 0.9 * self.torques + 0.1 * torques
+        self.torques = self.torque_filter(torques)
         super().run_controller()
 
         return self.torques
