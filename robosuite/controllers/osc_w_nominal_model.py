@@ -290,7 +290,7 @@ class OSCWithNominalModel(OperationalSpaceController):
         self.torques = self.torque_filter(torques)
         super(OperationalSpaceController, self).run_controller()
 
-        return self.torques
+        return torques # self.torques
 
     @property
     def name(self):
