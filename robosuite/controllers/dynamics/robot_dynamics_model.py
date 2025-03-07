@@ -63,19 +63,21 @@ class RoboDynamicsModel:
             pinocchio.ReferenceFrame.LOCAL_WORLD_ALIGNED
         )[:]
 
-        self.J_pos[:] = self.J_full[:3, :]
-        self.J_ori = self.J_full[3:, :]
+        self.J_pos[:] = self.J_full[:3]
+        self.J_ori[:] = self.J_full[3:]
 
     def compute_mass_matrix(self, q):
-        self.mass_matrix[:] = 0.0
-        self.mass_matrix[:] = pinocchio.crba(self.model, self.data, q)[:]
-        self.mass_matrix_inv[:] = inverse_cholesky(self.mass_matrix)
+        pinocchio.crba(self.model, self.data, q)
+        self.mass_matrix[:] = self.data.M[:]
+        self.mass_matrix_inv[:] = inverse_cholesky(self.mass_matrix)[:]
 
     def compute_coriolis_matrix(self, q, qd):
-        self.coriolis_matrix[:] = pinocchio.computeCoriolisMatrix(self.model, self.data, q, qd)[:]
+        pinocchio.computeCoriolisMatrix(self.model, self.data, q, qd)
+        self.coriolis_matrix[:] = self.data.C[:]
 
     def compute_gravity_torque(self, q):
-        self.torque_gravity[:] = pinocchio.computeGeneralizedGravity(self.model, self.data, q)[:]
+        pinocchio.computeGeneralizedGravity(self.model, self.data, q)
+        self.torque_gravity[:] = self.data.g[:]
 
     def compute_operational_space_matrices(self):
         
