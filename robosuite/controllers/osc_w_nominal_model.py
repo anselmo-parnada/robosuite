@@ -185,32 +185,24 @@ class OSCWithNominalModel(OperationalSpaceController):
 
         # Only run update if self.new_update or force flag is set
         if self.new_update or force:
-            self.sim.forward()
+            # TODO: remove superclass call and replace with custom update
+            super(OperationalSpaceController, self).update()
+            
+            self.joint_accel = np.array(self.sim.data.qacc[self.qvel_index])
 
-            self.joint_pos = np.array(self.sim.data.qpos[self.qpos_index])
-            # self.q = self.joint_pos_filter(self.joint_pos)
-            self.q = np.array(self.sim.data.qpos[self.qpos_index])
+            self.nominal_robot_model.update_model(self.joint_pos, self.joint_vel, self.joint_accel)
 
-            # self.joint_vel = self.joint_vel_eul_diff(self.joint_pos)
-            # self.qd = self.joint_vel_filter(self.joint_vel)
-            self.qd = np.array(self.sim.data.qvel[self.qvel_index])
-
-            # self.joint_accel = self.joint_accel_eul_diff(self.joint_vel)
-            # self.qdd = self.joint_acc_filter(self.joint_accel)
-            self.qdd = np.array(self.sim.data.qacc[self.qvel_index])
-
-            self.nominal_robot_model.update_model(self.q, self.qd, self.qdd)
-
+            self.J_full = self.nominal_robot_model.J_full
             self.J_pos = self.nominal_robot_model.J_pos
             self.J_ori = self.nominal_robot_model.J_ori
-            self.J_full = self.nominal_robot_model.J_full
 
             self.ee_pos = self.nominal_robot_model.ee_pos
             self.ee_ori_mat = self.nominal_robot_model.ee_ori
-            self.ee_pos_vel = self.J_pos @ self.qd
-            self.ee_ori_vel = self.J_ori @ self.qd
+            self.ee_pos_vel = self.J_pos @ self.joint_vel
+            self.ee_ori_vel = self.J_ori @ self.joint_vel
 
             self.mass_matrix = self.nominal_robot_model.mass_matrix
+            self.mass_matrix_inv = self.nominal_robot_model.mass_matrix_inv
 
             # Clear self.new_update
             self.new_update = False
