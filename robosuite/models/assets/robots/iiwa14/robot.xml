@@ -92,6 +92,16 @@
     </body>
   </worldbody>
 
+  <contact>
+    <exclude body1="base" body2="link_1"/>
+    <exclude body1="base" body2="link_2"/>
+    <exclude body1="base" body2="link_3"/>
+    <exclude body1="link_1" body2="link_3"/>
+    <exclude body1="link_3" body2="link_5"/>
+    <exclude body1="link_4" body2="link_7"/>
+    <exclude body1="link_5" body2="link_7"/>
+  </contact>
+
   <actuator>
     <motor ctrllimited="true" name="torq_j1" joint="joint_1" ctrlrange="-320 320"/>
     <motor ctrllimited="true" name="torq_j2" joint="joint_2" ctrlrange="-320 320"/>
