@@ -270,7 +270,7 @@ class OSCWithNominalModel(OperationalSpaceController):
             decoupled_wrench = np.dot(self.nominal_robot_model.lambda_full, desired_wrench)
 
         # Gamma (without null torques) = J^T * F + gravity compensations
-        torques = np.dot(self.J_full.T, decoupled_wrench) + self.torque_compensation
+        torques = np.dot(self.J_full.T, decoupled_wrench)
 
         # Calculate and add nullspace torques (nullspace_matrix^T * Gamma_null) to final torques
         # Note: Gamma_null = desired nullspace pose torques, assumed to be positional joint control relative
@@ -278,6 +278,8 @@ class OSCWithNominalModel(OperationalSpaceController):
         torques += nullspace_torques(
             self.mass_matrix, self.nominal_robot_model.nullspace_matrix, self.initial_joint, self.joint_pos, self.joint_vel
         )
+
+        torques += self.nominal_robot_model.torque_gravity + self.nominal_robot_model.coriolis_matrix @ self.joint_vel
 
         # Always run superclass call for any cleanups at the end
         self.torques = self.torque_filter(torques)
