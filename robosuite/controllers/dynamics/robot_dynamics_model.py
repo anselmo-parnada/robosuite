@@ -188,5 +188,5 @@ class RoboDynamicsModel:
 
     def update_base_pose(self, base_pos, base_ori):
         self.base_pos = base_pos
-        if not np.isclose(self.base_ori, IDENT_QUAT).all():
-            self.base_ori_mat = T.quat2mat(base_ori)
+        if not np.isclose(base_ori, IDENT_QUAT).all():
+            self.base_ori = T.quat2mat(base_ori)
