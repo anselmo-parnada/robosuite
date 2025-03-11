@@ -65,8 +65,8 @@ class RoboDynamicsModel:
 
         if self.base_pos is not None:
             np.add(self.ee_pos, self.base_pos, out=self.ee_pos)
-        if self.base_ori_mat is not None:
-            np.dot(self.base_ori_mat, self.ee_ori, out=self.ee_ori)
+        if self.base_ori is not None:
+            np.dot(self.base_ori, self.ee_ori, out=self.ee_ori)
 
     def compute_eef_jacobian(self, q):
         self.J_full[:] = pinocchio.computeFrameJacobian(
