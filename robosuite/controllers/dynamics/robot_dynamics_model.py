@@ -20,6 +20,8 @@ class RoboDynamicsModel:
 
         self.fetch_joint_friction_and_damping()
 
+        self.base_pos = None
+        self.base_ori = None
         self.ee_pos = np.empty(3, dtype=np.float64)
         self.ee_ori = np.empty((3,3), dtype=np.float64)
         self.J_full = np.empty((6, self.n_dof), dtype=np.float64)
@@ -56,6 +58,11 @@ class RoboDynamicsModel:
         eef_se3 = self.data.oMf[self.ee_link_frame_id]
         self.ee_pos[:] = eef_se3.translation[:]
         self.ee_ori[:] = eef_se3.rotation[:]
+
+        if self.base_pos is not None:
+            np.add(self.ee_pos, self.base_pos, out=self.ee_pos)
+        if self.base_ori_mat is not None:
+            np.dot(self.base_ori_mat, self.ee_ori, out=self.ee_ori)
 
     def compute_eef_jacobian(self, q):
         self.J_full[:] = pinocchio.computeFrameJacobian(
@@ -173,3 +180,8 @@ class RoboDynamicsModel:
         np.add(torques_friction, stiction_torque, out=torques_friction)
 
         # torques_friction[np.abs(tau) < 1e-2] = 0.0
+
+    def update_base_pose(self, base_pos, base_ori):
+        self.base_pos = base_pos
+        if not np.isclose(self.base_ori, IDENT_QUAT).all():
+            self.base_ori_mat = T.quat2mat(base_ori)

@@ -297,3 +297,15 @@ class OSCWithNominalModel(OperationalSpaceController):
     @property
     def name(self):
         return "OSC_NOMINAL_MODEL_" + self.name_suffix
+    
+    def update_base_pose(self, base_pos, base_ori):
+        """
+        Optional function to implement in subclass controllers that will take in @base_pos and @base_ori and update
+        internal configuration to account for changes in the respective states. Useful for controllers e.g. IK, which
+        is based on pybullet and requires knowledge of simulator state deviations between pybullet and mujoco
+
+        Args:
+            base_pos (3-tuple): x,y,z position of robot base in mujoco world coordinates
+            base_ori (4-tuple): x,y,z,w orientation or robot base in mujoco world coordinates
+        """
+        self.nominal_robot_model.update_base_pose(base_pos, base_ori)
