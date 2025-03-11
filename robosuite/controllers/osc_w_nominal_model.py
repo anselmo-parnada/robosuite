@@ -128,12 +128,13 @@ class OSCWithNominalModel(OperationalSpaceController):
         control_delta=True,
         uncouple_pos_ori=True,
         nominal_model_urdf_fp=None,
+        armature=np.array([0., 0., 0., 0., 0., 0., 0.]),
         **kwargs,  # does nothing; used so no error raised when dict is passed with extra terms used previously
     ):
         self.model_timestep = macros.SIMULATION_TIMESTEP
         
         assert nominal_model_urdf_fp is not None, "Must provide a nominal model URDF filepath for OSCWithNominalModel"
-        self.nominal_robot_model = RoboDynamicsModel(nominal_model_urdf_fp, "lbr_link_tcp")
+        self.nominal_robot_model = RoboDynamicsModel(nominal_model_urdf_fp, armature=armature)
         
         self.torque_filter = LowPassFilter(100.0, self.model_timestep)
 

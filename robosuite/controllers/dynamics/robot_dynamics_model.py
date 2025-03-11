@@ -7,8 +7,10 @@ import pinocchio # type: ignore
 from robosuite.utils.control_utils import inverse_cholesky
 import robosuite.utils.transform_utils as T
 
+IDENT_QUAT = np.array([1., 0., 0., 0.], np.float64)
+
 class RoboDynamicsModel:
-    def __init__(self, urdf_fp, ee_link):
+    def __init__(self, urdf_fp, armature, ee_link="lbr_link_tcp"):
         self.parsed_urdf_model = URDF.from_xml_file(urdf_fp) # parsed urdf model for convenience
         
         self.model, _, _ = pinocchio.buildModelsFromUrdf(
@@ -17,6 +19,8 @@ class RoboDynamicsModel:
 
         self.data = self.model.createData()
         self.ee_link_frame_id = self.model.getFrameId(ee_link)
+        assert isinstance(armature, np.floating) and np.all(armature >= 0) and armature.size == self.model.nq
+        self.armature = np.diag(armature)
 
         self.fetch_joint_friction_and_damping()
 
@@ -76,6 +80,7 @@ class RoboDynamicsModel:
     def compute_mass_matrix(self, q):
         pinocchio.crba(self.model, self.data, q)
         self.mass_matrix[:] = self.data.M[:]
+        np.add(self.mass_matrix, self.armature, out=self.mass_matrix)
         self.mass_matrix_inv[:] = inverse_cholesky(self.mass_matrix)[:]
 
     def compute_coriolis_matrix(self, q, qd):
