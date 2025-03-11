@@ -19,8 +19,7 @@ class RoboDynamicsModel:
 
         self.data = self.model.createData()
         self.ee_link_frame_id = self.model.getFrameId(ee_link)
-        assert isinstance(armature, np.floating) and np.all(armature >= 0) and armature.size == self.model.nq
-        self.armature = np.diag(armature)
+        self.model.armature[:] = armature[:] 
 
         self.fetch_joint_friction_and_damping()
 
