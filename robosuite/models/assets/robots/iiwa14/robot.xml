@@ -1,19 +1,4 @@
 <mujoco model="iiwa14">
-  <!-- <compiler angle="radian" autolimits="true"/> -->
-
-  <!-- <option integrator="implicitfast"/> -->
-
-  <!-- <default>
-    <default class="iiwa">
-      <default class="visual">
-        <geom type="mesh" contype="0" conaffinity="0" group="1" material="gray"/>
-      </default>
-      <default class="collision">
-        <geom contype="0"/>
-      </default>
-    </default>
-  </default> -->
-
   <asset>
     <material name="gray" rgba="0.4 0.4 0.4 1"/>
     <material name="light_gray" rgba="0.6 0.6 0.6 1"/>
@@ -107,16 +92,6 @@
     </body>
   </worldbody>
 
-  <contact>
-    <exclude body1="base" body2="link_1"/>
-    <exclude body1="base" body2="link_2"/>
-    <exclude body1="base" body2="link_3"/>
-    <exclude body1="link_1" body2="link_3"/>
-    <exclude body1="link_3" body2="link_5"/>
-    <exclude body1="link_4" body2="link_7"/>
-    <exclude body1="link_5" body2="link_7"/>
-  </contact>
-
   <actuator>
     <motor ctrllimited="true" name="torq_j1" joint="joint_1" ctrlrange="-320 320"/>
     <motor ctrllimited="true" name="torq_j2" joint="joint_2" ctrlrange="-320 320"/>
@@ -126,8 +101,4 @@
     <motor ctrllimited="true" name="torq_j6" joint="joint_6" ctrlrange="-40 40"/>
     <motor ctrllimited="true" name="torq_j7" joint="joint_7" ctrlrange="-40 40"/>
   </actuator>
-
-  <keyframe>
-    <key name="home" qpos="0 0 0 -1.5708 0 1.5708 0"/>
-  </keyframe>
 </mujoco>
