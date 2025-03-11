@@ -11,7 +11,7 @@
     <inertial>
       <origin rpy="0 0 0" xyz="-0.1 0 0.07"/>
       <mass value="5"/>
-      <inertia ixx="0.0333" ixy="0.0" ixz="0.0" iyy="0.033" iyz="0.0" izz="0.0123"/>
+      <inertia ixx="0.05" ixy="0.0" ixz="0.0" iyy="0.06" iyz="0.0" izz="0.03"/>
     </inertial>
   </link>
   <joint name="lbr_A1" type="revolute">
