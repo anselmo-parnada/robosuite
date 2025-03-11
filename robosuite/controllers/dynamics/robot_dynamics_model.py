@@ -81,7 +81,6 @@ class RoboDynamicsModel:
     def compute_mass_matrix(self, q):
         pinocchio.crba(self.model, self.data, q)
         self.mass_matrix[:] = self.data.M[:]
-        np.add(self.mass_matrix, self.armature, out=self.mass_matrix)
         self.mass_matrix_inv[:] = inverse_cholesky(self.mass_matrix)[:]
 
     def compute_coriolis_matrix(self, q, qd):
