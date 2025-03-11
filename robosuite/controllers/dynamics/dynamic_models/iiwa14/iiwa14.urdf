@@ -146,7 +146,7 @@
   <joint name="lbr_joint_tcp" type="fixed">
     <parent link="lbr_link_ee2"/>
     <child link="lbr_link_tcp"/>
-    <origin rpy="0 0 0" xyz="0 0 0.0995"/>
+    <origin rpy="0 0 0" xyz="0 0 0.062"/>
   </joint>
   <link name="lbr_link_tcp">
   </link>
