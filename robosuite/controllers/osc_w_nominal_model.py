@@ -279,7 +279,7 @@ class OSCWithNominalModel(OperationalSpaceController):
             self.mass_matrix, self.nominal_robot_model.nullspace_matrix, self.initial_joint, self.joint_pos, self.joint_vel
         )
 
-        torques += self.nominal_robot_model.torque_gravity + self.nominal_robot_model.coriolis_matrix @ self.joint_vel
+        torques += self.torque_compensation
 
         # Always run superclass call for any cleanups at the end
         self.torques = self.torque_filter(torques)
