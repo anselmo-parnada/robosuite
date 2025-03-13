@@ -47,7 +47,6 @@ def get_contact_forces_on_geom(
     return contact_forces
 
 
-
 def get_largest_contact_force_on_geom(
         env : MujocoEnv, geom_id : int
     ):
