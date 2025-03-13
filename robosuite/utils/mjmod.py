@@ -1732,7 +1732,7 @@ class DynamicsModder(BaseModder):
             for name in group_randomize_names:
                 # Randomize all parameters associated with this element
                 for attr, default_val in group_defaults[name].items():
-                    val = copy.copy(default_val)
+                    val = copy.deepcopy(default_val)
                     settings = group_randomizations[attr]
                     if settings["randomize"]:
                         if "quat" in attr:
