@@ -1866,7 +1866,7 @@ class DynamicsModder(BaseModder):
         """
         # Modify this value
         body_id = self.sim.model.body_name2id(name)
-        self.sim.model.body_pos[body_id] = np.array(val)
+        self.sim.model.body_ipos[body_id] = np.array(val)
 
     def mod_iquat(self, name, val=(1, 0, 0, 0)):
         """
@@ -1883,7 +1883,7 @@ class DynamicsModder(BaseModder):
         val = np.array(val) / np.linalg.norm(val)
         # Modify this value
         body_id = self.sim.model.body_name2id(name)
-        self.sim.model.body_quat[body_id] = val
+        self.sim.model.body_iquat[body_id] = val
 
     def mod_inertia(self, name, val):
         """
