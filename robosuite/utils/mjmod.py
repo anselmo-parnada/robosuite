@@ -1641,19 +1641,19 @@ class DynamicsModder(BaseModder):
                 "randomize": randomize_frictionloss,
                 "perturbation": frictionloss_perturbation_size,
                 "type": "size",
-                "clip": (0.0, np.inf),
+                "clip": (0.1, np.inf),
             },
             "damping": {
                 "randomize": randomize_damping,
                 "perturbation": damping_perturbation_size,
                 "type": "size",
-                "clip": (0.0, np.inf),
+                "clip": (0.1, np.inf),
             },
             "armature": {
                 "randomize": randomize_armature,
                 "perturbation": armature_perturbation_size,
                 "type": "size",
-                "clip": (0.0, np.inf),
+                "clip": (0.1, np.inf),
             },
         }
 
