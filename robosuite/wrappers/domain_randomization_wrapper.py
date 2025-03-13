@@ -60,7 +60,7 @@ DEFAULT_DYNAMICS_ARGS = {
     "quaternion_perturbation_size": 0.003,
     "inertia_perturbation_ratio": 0.02,
     "mass_perturbation_ratio": 0.02,
-    "ipos_perturbation_size": 0.01,
+    "ipos_perturbation_ratio": 0.01,
     "iquat_perturbation_size": 0.01,
     # Geom parameters
     "geom_names": None,  # all geoms randomized
