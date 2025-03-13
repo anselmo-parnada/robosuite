@@ -2037,6 +2037,8 @@ class DynamicsModder(BaseModder):
             "quaternion",
             "inertia",
             "mass",
+            "ipos",
+            "iquat",
             # Geom parameters
             "friction",
             "solref",
