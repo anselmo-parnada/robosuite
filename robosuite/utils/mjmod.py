@@ -1490,7 +1490,7 @@ class DynamicsModder(BaseModder):
 
         damping_perturbation_size (float): Magnitude of joint damping randomization
 
-        armature_perturbation_size (float): Magnitude of joint armature randomization
+        armature_perturbation_ratio (float): Relative (fraction) magnitude of joint armature randomization
     """
 
     def __init__(
@@ -1533,7 +1533,7 @@ class DynamicsModder(BaseModder):
         stiffness_perturbation_ratio=0.1,
         frictionloss_perturbation_size=0.05,
         damping_perturbation_size=0.01,
-        armature_perturbation_size=0.01,
+        armature_perturbation_ratio=0.01,
     ):
         super().__init__(sim=sim, random_state=random_state)
 
@@ -1651,8 +1651,8 @@ class DynamicsModder(BaseModder):
             },
             "armature": {
                 "randomize": randomize_armature,
-                "perturbation": armature_perturbation_size,
-                "type": "size",
+                "perturbation": armature_perturbation_ratio,
+                "type": "ratio",
                 "clip": (0.1, np.inf),
             },
         }
