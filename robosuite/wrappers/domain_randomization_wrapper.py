@@ -54,10 +54,14 @@ DEFAULT_DYNAMICS_ARGS = {
     "randomize_quaternion": True,
     "randomize_inertia": True,
     "randomize_mass": True,
+    "randomize_ipos": True,
+    "randomize_iquat": True,
     "position_perturbation_size": 0.0015,
     "quaternion_perturbation_size": 0.003,
     "inertia_perturbation_ratio": 0.02,
     "mass_perturbation_ratio": 0.02,
+    "ipos_perturbation_size": 0.01,
+    "iquat_perturbation_size": 0.01,
     # Geom parameters
     "geom_names": None,  # all geoms randomized
     "randomize_friction": True,

@@ -1508,10 +1508,14 @@ class DynamicsModder(BaseModder):
         randomize_quaternion=True,
         randomize_inertia=True,
         randomize_mass=True,
+        randomize_ipos=True,
+        randomize_iquat=True,
         position_perturbation_size=0.02,
         quaternion_perturbation_size=0.02,
         inertia_perturbation_ratio=0.02,
         mass_perturbation_ratio=0.02,
+        ipos_perturbation_size=0.01,
+        iquat_perturbation_size=0.01,
         # Geom parameters
         geom_names=None,
         randomize_friction=True,
@@ -1591,6 +1595,18 @@ class DynamicsModder(BaseModder):
                 "type": "ratio",
                 "clip": (0.0, np.inf),
             },
+            "ipos": {
+                "randomize": randomize_ipos,
+                "perturbation": ipos_perturbation_size,
+                "type": "size",
+                "clip": (-np.inf, np.inf),
+            },
+            "iquat": {
+                "randomize": randomize_iquat,
+                "perturbation": iquat_perturbation_size,
+                "type": "size",
+                "clip": (-np.pi, np.pi),
+            },
         }
 
         self.geom_randomizations = {
@@ -1667,6 +1683,8 @@ class DynamicsModder(BaseModder):
                 "quaternion": np.array(self.sim.model.body_quat[body_id]),
                 "inertia": np.array(self.sim.model.body_inertia[body_id]),
                 "mass": self.sim.model.body_mass[body_id],
+                "ipos": np.array(self.sim.model.body_ipos[body_id]),
+                "iquat": np.array(self.sim.model.body_iquat[body_id]),
             }
 
         self.geom_defaults = {}
@@ -1809,6 +1827,36 @@ class DynamicsModder(BaseModder):
         self.sim.model.body_pos[body_id] = np.array(val)
 
     def mod_quaternion(self, name, val=(1, 0, 0, 0)):
+        """
+        Modifies the @name's relative body orientation (quaternion) within the simulation.
+        See http://www.mujoco.org/book/XMLreference.html#body for more details.
+
+        Note: This method automatically normalizes the inputted value.
+
+        Args:
+            name (str): Name for this element.
+            val (4-array): New (w, x, y, z) relative quaternion.
+        """
+        # Normalize the inputted value
+        val = np.array(val) / np.linalg.norm(val)
+        # Modify this value
+        body_id = self.sim.model.body_name2id(name)
+        self.sim.model.body_quat[body_id] = val
+
+    def mod_ipos(self, name, val=(0, 0, 0)):
+        """
+        Modifies the @name's relative body position within the simulation.
+        See http://www.mujoco.org/book/XMLreference.html#body for more details.
+
+        Args:
+            name (str): Name for this element.
+            val (3-array): New (x, y, z) relative position.
+        """
+        # Modify this value
+        body_id = self.sim.model.body_name2id(name)
+        self.sim.model.body_pos[body_id] = np.array(val)
+
+    def mod_iquat(self, name, val=(1, 0, 0, 0)):
         """
         Modifies the @name's relative body orientation (quaternion) within the simulation.
         See http://www.mujoco.org/book/XMLreference.html#body for more details.
