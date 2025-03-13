@@ -1581,7 +1581,7 @@ class DynamicsModder(BaseModder):
                 "randomize": randomize_quaternion,
                 "perturbation": quaternion_perturbation_size,
                 "type": "size",
-                "clip": (-np.inf, np.inf),
+                "clip": (-np.pi, np.pi),
             },
             "inertia": {
                 "randomize": randomize_inertia,
