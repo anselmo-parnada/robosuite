@@ -41,7 +41,7 @@ def get_contact_forces_on_geom(
 
     for i in range(env.sim.data.ncon):
         if geom_id in mj_contact_struct.geom[i]:
-            mujoco.mj_contactForce(env.sim.model._model, env.sim.data._data, geom_id, contact_force)
+            mujoco.mj_contactForce(env.sim.model._model, env.sim.data._data, i, contact_force)
             contact_forces.append(contact_force.copy())
 
     return contact_forces
