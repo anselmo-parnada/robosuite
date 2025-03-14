@@ -302,25 +302,3 @@ class OSCWithNominalModel(OperationalSpaceController):
             base_ori (4-tuple): x,y,z,w orientation or robot base in mujoco world coordinates
         """
         self.nominal_robot_model.update_base_pose(base_pos, base_ori)
-
-    # def scale_action(self, action):
-    #     """
-    #     Clips @action to be within self.input_min and self.input_max, and then re-scale the values to be within
-    #     the range self.output_min and self.output_max
-
-    #     Args:
-    #         action (Iterable): Actions to scale
-
-    #     Returns:
-    #         np.array: Re-scaled action
-    #     """
-
-    #     if self.action_scale is None:
-    #         self.action_scale = abs(self.output_max - self.output_min) / abs(self.input_max - self.input_min)
-    #         self.action_output_transform = (self.output_max + self.output_min) / 2.0
-    #         self.action_input_transform = (self.input_max + self.input_min) / 2.0
-    #     action = np.clip(action, self.input_min, self.input_max)
-    #     action = np.sign(action) * np.square(action)
-    #     transformed_action = (action - self.action_input_transform) * self.action_scale + self.action_output_transform
-
-    #     return transformed_action
