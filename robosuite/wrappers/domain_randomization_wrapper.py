@@ -202,6 +202,10 @@ class DomainRandomizationWrapper(Wrapper):
         # normal env reset
         ret = super().reset()
 
+        # update sims
+        for modder in self.modders:
+            modder.update_sim(self.env.sim)
+
         # save the original env parameters
         self.save_default_domain()
 
