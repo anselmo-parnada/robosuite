@@ -2,6 +2,7 @@ import math
 
 import mujoco
 import numpy as np
+import numpy.typing as npt
 
 from robosuite import macros
 from robosuite.controllers.dynamics.robot_dynamics_model import RoboDynamicsModel
@@ -14,6 +15,12 @@ from robosuite.utils.control_utils import *
 IMPEDANCE_MODES = {"fixed", "variable", "variable_kp"}
 
 # TODO: Maybe better naming scheme to differentiate between input / output min / max and pos/ori limits, etc.
+
+def generate_random_vector_w_specified_magnitude(shape : tuple, magnitude : float):
+    out_vec = np.random.rand(*shape)
+    out_vec /= np.linalg.norm(out_vec)
+    out_vec *= magnitude
+    return out_vec
 
 class OSCWithNominalModel(OperationalSpaceController):
     """
@@ -129,12 +136,19 @@ class OSCWithNominalModel(OperationalSpaceController):
         uncouple_pos_ori=True,
         nominal_model_urdf_fp=None,
         armature=np.array([0., 0., 0., 0., 0., 0., 0.]),
+        enable_disturbance_wrench=False,
+        max_disturbance_force=0.0,
+        max_disturbance_torque=0.0,
         **kwargs,  # does nothing; used so no error raised when dict is passed with extra terms used previously
     ):
         self.model_timestep = macros.SIMULATION_TIMESTEP
         
         assert nominal_model_urdf_fp is not None, "Must provide a nominal model URDF filepath for OSCWithNominalModel"
         self.nominal_robot_model = RoboDynamicsModel(nominal_model_urdf_fp, armature=armature)
+        
+        self.enable_disturbance_wrench = enable_disturbance_wrench
+        self.max_disturbance_force = max_disturbance_force
+        self.max_disturbance_torque = max_disturbance_torque
         
         self.torque_filter = LowPassFilter(300.0, self.model_timestep)
 
@@ -145,7 +159,7 @@ class OSCWithNominalModel(OperationalSpaceController):
 
         self.joint_accel = None
         self.joint_accel_eul_diff = BackwardEulerDiff(self.model_timestep)
-        self.joint_accel_filter = LowPassFilter(300.0, self.model_timestep)
+        self.joint_accel_filter = LowPassFilter(1.0, self.model_timestep)
 
         super().__init__(
             sim,
@@ -171,6 +185,12 @@ class OSCWithNominalModel(OperationalSpaceController):
             uncouple_pos_ori=uncouple_pos_ori,
             **kwargs,
         )
+
+        if self.enable_disturbance_wrench:
+            self.disturbance_joint_torque = np.empty(self.nominal_robot_model.n_dof, np.float64)
+            self.calculate_disturbance_joint_torque()
+        else:
+            self.disturbance_joint_torque = None
 
     def update(self, force=False):
         """
@@ -283,10 +303,23 @@ class OSCWithNominalModel(OperationalSpaceController):
 
         # Always run superclass call for any cleanups at the end
         self.torques = self.torque_filter(torques)
+
+        if self.enable_disturbance_wrench:
+            self.torques += self.disturbance_joint_torque
+
         super(OperationalSpaceController, self).run_controller()
+        return self.torques
 
-        return torques # self.torques
-
+    def calculate_disturbance_joint_torque(self):
+        disturbance_force = generate_random_vector_w_specified_magnitude(
+            (3,), np.random.rand() * self.max_disturbance_force)
+        
+        disturbance_torque = generate_random_vector_w_specified_magnitude(
+            (3,), np.random.rand() * self.max_disturbance_torque)
+        
+        disturbance_wrench = np.concatenate([disturbance_force, disturbance_torque])
+        np.dot(self.J_full.T, disturbance_wrench, out=self.disturbance_joint_torque)
+        
     @property
     def name(self):
         return "OSC_NOMINAL_MODEL_" + self.name_suffix
