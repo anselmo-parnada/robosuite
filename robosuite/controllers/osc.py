@@ -113,6 +113,8 @@ class OperationalSpaceController(Controller):
         actuator_range,
         input_max=1,
         input_min=-1,
+        increment_max=(0.01, 0.01, 0.01, 0.1, 0.1, 0.1),
+        increment_min=(-0.01, -0.01, -0.01, -0.1, -0.1, -0.1),
         output_max=(0.05, 0.05, 0.05, 0.5, 0.5, 0.5),
         output_min=(-0.05, -0.05, -0.05, -0.5, -0.5, -0.5),
         kp=150,
@@ -146,10 +148,13 @@ class OperationalSpaceController(Controller):
         # Control dimension
         self.control_dim = 6 if self.use_ori else 3
         self.name_suffix = "POSE" if self.use_ori else "POSITION"
+        self.delta = np.zeros((self.control_dim, ), np.float64)
 
         # input and output max and min (allow for either explicit lists or single numbers)
         self.input_max = self.nums2array(input_max, self.control_dim)
         self.input_min = self.nums2array(input_min, self.control_dim)
+        self.increment_max = self.nums2array(increment_max, self.control_dim)
+        self.increment_min = self.nums2array(increment_min, self.control_dim)
         self.output_max = self.nums2array(output_max, self.control_dim)
         self.output_min = self.nums2array(output_min, self.control_dim)
 
@@ -221,48 +226,51 @@ class OperationalSpaceController(Controller):
 
         # Parse action based on the impedance mode, and update kp / kd as necessary
         if self.impedance_mode == "variable":
-            damping_ratio, kp, delta = action[:6], action[6:12], action[12:]
+            damping_ratio, kp, delta_increment = action[:6], action[6:12], action[12:]
             self.kp = np.clip(kp, self.kp_min, self.kp_max)
             self.kd = 2 * np.sqrt(self.kp) * np.clip(damping_ratio, self.damping_ratio_min, self.damping_ratio_max)
         elif self.impedance_mode == "variable_kp":
-            kp, delta = action[:6], action[6:]
+            kp, delta_increment = action[:6], action[6:]
             self.kp = np.clip(kp, self.kp_min, self.kp_max)
             self.kd = 2 * np.sqrt(self.kp)  # critically damped
         else:  # This is case "fixed"
-            delta = action
+            delta_increment = action
 
         # If we're using deltas, interpret actions as such
         if self.use_delta:
-            if delta is not None:
-                scaled_delta = self.scale_action(delta)
+            if delta_increment is not None:
+                scaled_delta_increment = self.scale_action(delta_increment)
                 if not self.use_ori and set_ori is None:
                     # Set default control for ori since user isn't actively controlling ori
                     set_ori = np.array([[0.0, 1.0, 0.0], [1.0, 0.0, 0.0], [0.0, 0.0, -1.0]])
             else:
-                scaled_delta = []
+                scaled_delta_increment = np.zeros_like(self.delta)
         # Else, interpret actions as absolute values
         else:
             if set_pos is None:
-                set_pos = delta[:3]
+                set_pos = delta_increment[:3]
             # Set default control for ori if we're only using position control
             if set_ori is None:
                 set_ori = (
-                    T.quat2mat(T.axisangle2quat(delta[3:6]))
+                    T.quat2mat(T.axisangle2quat(delta_increment[3:6]))
                     if self.use_ori
                     else np.array([[0.0, 1.0, 0.0], [1.0, 0.0, 0.0], [0.0, 0.0, -1.0]])
                 )
             # No scaling of values since these are absolute values
-            scaled_delta = delta
+            scaled_delta_increment = delta_increment
+
+        if self.use_delta:
+            self.update_delta(scaled_delta_increment)
 
         # We only want to update goal orientation if there is a valid delta ori value OR if we're using absolute ori
         # use math.isclose instead of numpy because numpy is slow
-        bools = [0.0 if math.isclose(elem, 0.0) else 1.0 for elem in scaled_delta[3:]]
+        bools = [0.0 if math.isclose(elem, 0.0) else 1.0 for elem in scaled_delta_increment[3:]]
         if sum(bools) > 0.0 or set_ori is not None:
             self.goal_ori = set_goal_orientation(
-                scaled_delta[3:], self.ee_ori_mat, orientation_limit=self.orientation_limits, set_ori=set_ori
+                self.delta[3:], self.ee_ori_mat, orientation_limit=self.orientation_limits, set_ori=set_ori
             )
         self.goal_pos = set_goal_position(
-            scaled_delta[:3], self.ee_pos, position_limit=self.position_limits, set_pos=set_pos
+            self.delta[:3], self.ee_pos, position_limit=self.position_limits, set_pos=set_pos
         )
 
         if self.interpolator_pos is not None:
@@ -274,6 +282,16 @@ class OperationalSpaceController(Controller):
                 orientation_error(self.goal_ori, self.ori_ref)
             )  # goal is the total orientation error
             self.relative_ori = np.zeros(3)  # relative orientation always starts at 0
+
+    def update_delta(self, scale_delta_increment):
+        np.add(self.delta[:3], scale_delta_increment[:3], out=self.delta[:3])
+        np.clip(self.delta[:3], self.output_min[:3], self.output_max[:3], out=self.delta[:3])
+        if self.use_ori:
+            curr_delta_rot_quat = T.axisangle2quat(self.delta[3:])
+            inc_delta_rot_quat = T.axisangle2quat(scale_delta_increment[3:])
+            new_delta_rot_quat = T.quat_multiply(inc_delta_rot_quat, curr_delta_rot_quat)
+            self.delta[3:] = T.quat2axisangle(new_delta_rot_quat)
+            np.clip(self.delta[3:], self.output_min[3:], self.output_max[3:], out=self.delta[3:])
 
     def run_controller(self):
         """

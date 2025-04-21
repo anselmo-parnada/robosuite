@@ -43,7 +43,7 @@ class Controller(object, metaclass=abc.ABCMeta):
         # Attributes for scaling / clipping inputs to outputs
         self.action_scale = None
         self.action_input_transform = None
-        self.action_output_transform = None
+        self.action_increment_transform = None
 
         # Private property attributes
         self.control_dim = None
@@ -51,6 +51,8 @@ class Controller(object, metaclass=abc.ABCMeta):
         self.output_max = None
         self.input_min = None
         self.input_max = None
+        self.increment_min = None
+        self.increment_max = None
 
         # mujoco simulator state
         self.sim = sim
@@ -114,11 +116,11 @@ class Controller(object, metaclass=abc.ABCMeta):
         """
 
         if self.action_scale is None:
-            self.action_scale = abs(self.output_max - self.output_min) / abs(self.input_max - self.input_min)
-            self.action_output_transform = (self.output_max + self.output_min) / 2.0
+            self.action_scale = abs(self.increment_max - self.increment_min) / abs(self.input_max - self.input_min)
+            self.action_increment_transform = (self.increment_max + self.increment_min) / 2.0
             self.action_input_transform = (self.input_max + self.input_min) / 2.0
         action = np.clip(action, self.input_min, self.input_max)
-        transformed_action = (action - self.action_input_transform) * self.action_scale + self.action_output_transform
+        transformed_action = (action - self.action_input_transform) * self.action_scale + self.action_increment_transform
 
         return transformed_action
 
