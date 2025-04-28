@@ -287,10 +287,7 @@ class OperationalSpaceController(Controller):
         np.add(self.delta[:3], scale_delta_increment[:3], out=self.delta[:3])
         np.clip(self.delta[:3], self.output_min[:3], self.output_max[:3], out=self.delta[:3])
         if self.use_ori:
-            curr_delta_rot_quat = T.axisangle2quat(self.delta[3:])
-            inc_delta_rot_quat = T.axisangle2quat(scale_delta_increment[3:])
-            new_delta_rot_quat = T.quat_multiply(inc_delta_rot_quat, curr_delta_rot_quat)
-            self.delta[3:] = T.quat2axisangle(new_delta_rot_quat)
+            np.add(self.delta[3:], scale_delta_increment[3:], out=self.delta[3:])
             np.clip(self.delta[3:], self.output_min[3:], self.output_max[3:], out=self.delta[3:])
 
     def run_controller(self):
