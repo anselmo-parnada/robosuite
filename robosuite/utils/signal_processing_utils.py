@@ -47,26 +47,18 @@ class LowPassFilter:
         self.temp_2 = None
 
     def __call__(self, x):
-        assert isinstance(x, (np.ndarray, int, float)), "Input must be an instance of np.ndarray, int or float"
+        assert isinstance(x, np.ndarray), "Input must be an instance of np.ndarray"
 
-        if isinstance(x, np.ndarray):
-            if self.y is None:
-                self.y = x.copy()
+        if self.y is None:
+            self.y = x.copy()
 
-                self.temp_1 = np.empty_like(x)
-                self.temp_2 = np.empty_like(x)
-                return self.y
-            
-            np.multiply(self.alpha_inv, self.y, out=self.temp_1)
-            np.multiply(self.alpha, x, out=self.temp_2)
+            self.temp_1 = np.empty_like(x)
+            self.temp_2 = np.empty_like(x)
+            return self.y
+        
+        np.multiply(self.alpha_inv, self.y, out=self.temp_1)
+        np.multiply(self.alpha, x, out=self.temp_2)
 
-            np.add(self.temp_1, self.temp_2, out=self.y)
-
-        elif isinstance(x, int) or isinstance(x, float):
-            if self.y is None:
-                self.y = x
-                return self.y
-
-            self.y = (1.0 - self.alpha) * self.y + self.alpha * x
+        np.add(self.temp_1, self.temp_2, out=self.y)
 
         return self.y
