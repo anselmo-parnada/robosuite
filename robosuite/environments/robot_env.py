@@ -142,6 +142,7 @@ class RobotEnv(MujocoEnv):
         robot_configs=None,
         renderer="mujoco",
         renderer_config=None,
+        seed=None
     ):
         # First, verify that correct number of robots are being inputted
         self.env_configuration = env_configuration
@@ -224,7 +225,10 @@ class RobotEnv(MujocoEnv):
             hard_reset=hard_reset,
             renderer=renderer,
             renderer_config=renderer_config,
+            seed=seed
         )
+
+        self.robot_configs["np_random"] = self.np_random
 
     def visualize(self, vis_settings):
         """

@@ -62,6 +62,7 @@ class SingleArm(Manipulator):
         mount_type="default",
         gripper_type="default",
         control_freq=20,
+        np_random=None
     ):
 
         self.controller = None
@@ -130,6 +131,7 @@ class SingleArm(Manipulator):
         self.controller_config["actuator_range"] = self.torque_limits
         self.controller_config["policy_freq"] = self.control_freq
         self.controller_config["ndim"] = len(self.robot_joints)
+        self.controller_config["np_random"] = self.np_random
 
         # Instantiate the relevant controller
         self.controller = controller_factory(self.controller_config["type"], self.controller_config)

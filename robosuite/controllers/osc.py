@@ -129,6 +129,7 @@ class OperationalSpaceController(Controller):
         control_delta=True,
         uncouple_pos_ori=True,
         stiffness_in_tool_frame=True,
+        np_random=None,
         **kwargs,  # does nothing; used so no error raised when dict is passed with extra terms used previously
     ):
 
@@ -137,6 +138,7 @@ class OperationalSpaceController(Controller):
             eef_name,
             joint_indexes,
             actuator_range,
+            np_random,
         )
         # Determine whether this is pos ori or just pos
         self.use_ori = control_ori

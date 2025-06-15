@@ -1738,17 +1738,17 @@ class DynamicsModder(BaseModder):
                         if "quat" in attr:
                             # Randomize quaternion values
                             val = trans.convert_quat(val)
-                            perturbation = np.random.rand()
+                            perturbation = self.random_state.rand()
                             perturbation = settings["perturbation"] * (-1 + 2 * perturbation)
                             perturbation = np.clip(perturbation, *settings["clip"])
-                            rotation_axis = np.random.rand(3)
+                            rotation_axis = self.random_state.rand(3)
                             rotation_axis /= np.linalg.norm(rotation_axis)
                             rotation_axis *= perturbation
                             val = trans.quat_multiply(trans.axisangle2quat(rotation_axis), val)
                             val = trans.convert_quat(val, to="wxyz")
                         else:
                             # Randomize accordingly, and clip the final perturbed value
-                            perturbation = np.random.rand() if type(val) in {int, float} else np.random.rand(*val.shape)
+                            perturbation = self.random_state.rand() if type(val) in {int, float} else self.random_state.rand(*val.shape)
                             perturbation = settings["perturbation"] * (-1 + 2 * perturbation)
                             val = val + perturbation if settings["type"] == "size" else val * (1.0 + perturbation)
                             val = np.clip(val, *settings["clip"])

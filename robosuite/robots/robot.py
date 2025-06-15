@@ -51,6 +51,7 @@ class Robot(object):
         initialization_noise=None,
         mount_type="default",
         control_freq=20,
+        np_random=None,
     ):
         # Set relevant attributes
         self.sim = None  # MjSim this robot is tied to
@@ -84,6 +85,8 @@ class Robot(object):
         self.recent_actions = None  # Current and last action applied
         self.recent_torques = None  # Current and last torques applied
 
+        self.np_random = np_random
+        
     def _load_controller(self):
         """
         Loads controller to be used for dynamic trajectories.
@@ -130,9 +133,9 @@ class Robot(object):
         if not deterministic:
             # Determine noise
             if self.initialization_noise["type"] == "gaussian":
-                noise = np.random.randn(len(self.init_qpos)) * self.initialization_noise["magnitude"]
+                noise = self.np_random.randn(len(self.init_qpos)) * self.initialization_noise["magnitude"]
             elif self.initialization_noise["type"] == "uniform":
-                noise = np.random.uniform(-1.0, 1.0, len(self.init_qpos)) * self.initialization_noise["magnitude"]
+                noise = self.np_random.uniform(-1.0, 1.0, len(self.init_qpos)) * self.initialization_noise["magnitude"]
             else:
                 raise ValueError("Error: Invalid noise type specified. Options are 'gaussian' or 'uniform'.")
             init_qpos += noise

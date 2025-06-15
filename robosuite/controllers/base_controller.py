@@ -34,7 +34,12 @@ class Controller(object, metaclass=abc.ABCMeta):
         eef_name,
         joint_indexes,
         actuator_range,
+        np_random = None
     ):
+        if np_random is None:
+            self.np_random = np.random.default_rng()
+        else:
+            self.np_random = np_random
 
         # Actuator range
         self.actuator_min = actuator_range[0]
