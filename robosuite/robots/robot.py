@@ -133,7 +133,7 @@ class Robot(object):
         if not deterministic:
             # Determine noise
             if self.initialization_noise["type"] == "gaussian":
-                noise = self.np_random.randn(len(self.init_qpos)) * self.initialization_noise["magnitude"]
+                noise = self.np_random.standard_normal(len(self.init_qpos)) * self.initialization_noise["magnitude"]
             elif self.initialization_noise["type"] == "uniform":
                 noise = self.np_random.uniform(-1.0, 1.0, len(self.init_qpos)) * self.initialization_noise["magnitude"]
             else:

@@ -93,6 +93,7 @@ class SingleArm(Manipulator):
             initialization_noise=initialization_noise,
             mount_type=mount_type,
             control_freq=control_freq,
+            np_random=np_random
         )
 
     def _load_controller(self):

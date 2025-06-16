@@ -228,8 +228,6 @@ class RobotEnv(MujocoEnv):
             seed=seed
         )
 
-        self.robot_configs["np_random"] = self.np_random
-
     def visualize(self, vis_settings):
         """
         In addition to super call, visualizes robots.
@@ -594,7 +592,7 @@ class RobotEnv(MujocoEnv):
         # Loop through robots and instantiate Robot object for each
         for idx, (name, config) in enumerate(zip(self.robot_names, self.robot_configs)):
             # Create the robot instance
-            self.robots[idx] = ROBOT_CLASS_MAPPING[name](robot_type=name, idn=idx, **config)
+            self.robots[idx] = ROBOT_CLASS_MAPPING[name](robot_type=name, idn=idx, np_random=self.np_random, **config)
             # Now, load the robot models
             self.robots[idx].load_model()
 
