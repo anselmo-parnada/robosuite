@@ -142,26 +142,13 @@ class OSCWithNominalModel(OperationalSpaceController):
         np_random = None,
         **kwargs,  # does nothing; used so no error raised when dict is passed with extra terms used previously
     ):
-        self.model_timestep = macros.SIMULATION_TIMESTEP
-        
         assert nominal_model_urdf_fp is not None, "Must provide a nominal model URDF filepath for OSCWithNominalModel"
         self.nominal_robot_model = RoboDynamicsModel(nominal_model_urdf_fp, armature=armature)
         
         self.enable_disturbance_wrench = enable_disturbance_wrench
         self.max_disturbance_force = max_disturbance_force
         self.max_disturbance_torque = max_disturbance_torque
-        
-        self.torque_filter = LowPassFilter(300.0, self.model_timestep)
-
-        self.joint_pos_filter = LowPassFilter(300.0, self.model_timestep)
-
-        self.joint_vel_eul_diff = BackwardEulerDiff(self.model_timestep)
-        self.joint_vel_filter = LowPassFilter(300.0, self.model_timestep)
-
-        self.joint_accel = None
-        self.joint_accel_eul_diff = BackwardEulerDiff(self.model_timestep)
-        self.joint_accel_filter = LowPassFilter(1.0, self.model_timestep)
-
+    
         super().__init__(
             sim,
             eef_name=eef_name,
@@ -193,6 +180,18 @@ class OSCWithNominalModel(OperationalSpaceController):
             self.calculate_disturbance_joint_torque()
         else:
             self.disturbance_joint_torque = None
+            
+        self.torque_filter = LowPassFilter(300.0, self.dt)
+
+        self.joint_pos_filter = LowPassFilter(300.0, self.dt)
+
+        self.joint_vel_eul_diff = BackwardEulerDiff(self.dt)
+        self.joint_vel_filter = LowPassFilter(300.0, self.dt)
+
+        self.joint_accel = None
+        self.joint_accel_eul_diff = BackwardEulerDiff(self.dt)
+        self.joint_accel_filter = LowPassFilter(1.0, self.dt)
+
 
     def update(self, force=False):
         """

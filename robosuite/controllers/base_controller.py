@@ -34,13 +34,22 @@ class Controller(object, metaclass=abc.ABCMeta):
         eef_name,
         joint_indexes,
         actuator_range,
-        np_random = None
+        np_random = None,
+        controller_freq=None,
     ):
         if np_random is None:
             self.np_random = np.random.default_rng()
         else:
             self.np_random = np_random
-
+            
+        # Controller frequency
+        if controller_freq is None:
+            self.controller_freq = int(1 / macros.SIMULATION_TIMESTEP)
+            self.dt = macros.SIMULATION_TIMESTEP
+        else:
+            self.controller_freq = int(controller_freq)
+            self.dt = 1.0 / self.controller_freq
+            
         # Actuator range
         self.actuator_min = actuator_range[0]
         self.actuator_max = actuator_range[1]

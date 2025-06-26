@@ -3,6 +3,7 @@ import os
 from collections import OrderedDict
 
 import numpy as np
+from math import ceil
 
 import robosuite.utils.transform_utils as T
 from robosuite.controllers import controller_factory, load_controller_config
@@ -136,6 +137,8 @@ class SingleArm(Manipulator):
 
         # Instantiate the relevant controller
         self.controller = controller_factory(self.controller_config["type"], self.controller_config)
+        
+        self.num_steps_per_control = ceil(self.controller.dt / self.sim.model.opt.timestep)
 
     def load_model(self):
         """
@@ -218,12 +221,13 @@ class SingleArm(Manipulator):
         self.eef_site_id = self.sim.model.site_name2id(self.gripper.important_sites["grip_site"])
         self.eef_cylinder_id = self.sim.model.site_name2id(self.gripper.important_sites["grip_cylinder"])
 
-    def control(self, action, policy_step=False):
+    def control(self, num_sim_steps, action, policy_step=False):
         """
         Actuate the robot with the
         passed joint velocities and gripper control.
 
         Args:
+            num_sim_steps (int): Number of simulation steps taken during episode.
             action (np.array): The control to apply to the robot. The first @self.robot_model.dof dimensions should be
                 the desired normalized joint velocities and if the robot has a gripper, the next @self.gripper.dof
                 dimensions should be actuation controls for the gripper.
@@ -249,19 +253,20 @@ class SingleArm(Manipulator):
         if policy_step:
             self.controller.set_goal(arm_action)
 
-        # Now run the controller for a step
-        torques = self.controller.run_controller()
+        if num_sim_steps % self.num_steps_per_control == 0:
+            # Now run the controller for a step
+            torques = self.controller.run_controller()
 
-        # Clip the torques
-        low, high = self.torque_limits
-        self.torques = np.clip(torques, low, high)
+            # Clip the torques
+            low, high = self.torque_limits
+            self.torques = np.clip(torques, low, high)
 
+            # Apply joint torque control
+            self.sim.data.ctrl[self._ref_joint_actuator_indexes] = self.torques
+        
         # Get gripper action, if applicable
         if self.has_gripper:
             self.grip_action(gripper=self.gripper, gripper_action=gripper_action)
-
-        # Apply joint torque control
-        self.sim.data.ctrl[self._ref_joint_actuator_indexes] = self.torques
 
         # If this is a policy step, also update buffers holding recent values of interest
         if policy_step:

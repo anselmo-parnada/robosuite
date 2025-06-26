@@ -320,6 +320,7 @@ class MujocoEnv(metaclass=EnvMeta):
         self._setup_references()
         self.cur_time = 0
         self.timestep = 0
+        self.num_sim_steps = 0
         self.done = False
 
         # Empty observation cache and reset all observables
@@ -410,6 +411,7 @@ class MujocoEnv(metaclass=EnvMeta):
             self.sim.step()
             self._update_observables()
             num_steps_this_cycle += 1
+            self.num_sim_steps += 1
 
         # Note: this is done all at once to avoid floating point inaccuracies
         self.cur_time += self.control_timestep
