@@ -142,6 +142,7 @@ class RobotEnv(MujocoEnv):
         robot_configs=None,
         renderer="mujoco",
         renderer_config=None,
+        policy_delay=0.0,
         seed=None
     ):
         # First, verify that correct number of robots are being inputted
@@ -225,6 +226,7 @@ class RobotEnv(MujocoEnv):
             hard_reset=hard_reset,
             renderer=renderer,
             renderer_config=renderer_config,
+            policy_delay=policy_delay,
             seed=seed
         )
 

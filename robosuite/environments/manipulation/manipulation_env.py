@@ -142,6 +142,7 @@ class ManipulationEnv(RobotEnv):
         camera_segmentations=None,
         renderer="mujoco",
         renderer_config=None,
+        policy_delay=0.0,
         seed=None
     ):
         # Robot info
@@ -185,6 +186,7 @@ class ManipulationEnv(RobotEnv):
             robot_configs=robot_configs,
             renderer=renderer,
             renderer_config=renderer_config,
+            policy_delay=policy_delay,
             seed=seed,
         )
 

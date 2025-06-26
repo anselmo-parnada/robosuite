@@ -4,6 +4,7 @@ from collections import OrderedDict
 
 import numpy as np
 from gymnasium.utils import seeding
+from math import ceil
 
 import robosuite
 import robosuite.macros as macros
@@ -99,6 +100,7 @@ class MujocoEnv(metaclass=EnvMeta):
         hard_reset=True,
         renderer="mujoco",
         renderer_config=None,
+        policy_delay=0.0,
         seed=None
     ):
         if seed is None:
@@ -134,7 +136,9 @@ class MujocoEnv(metaclass=EnvMeta):
         self.model_timestep = None
         self.control_timestep = None
         self.deterministic_reset = False  # Whether to add randomized resetting of objects / robot joints
-
+        self.policy_delay = policy_delay
+        self.num_policy_delay_steps = None
+        
         self.renderer = renderer
         self.renderer_config = renderer_config
 
@@ -190,6 +194,9 @@ class MujocoEnv(metaclass=EnvMeta):
         if control_freq <= 0:
             raise SimulationError("Control frequency {} is invalid".format(control_freq))
         self.control_timestep = 1.0 / control_freq
+        if self.policy_delay < 0:
+            raise SimulationError("Policy delay {} is invalid".format(self.policy_delay))
+        self.num_policy_delay_steps = 0 if self.policy_delay < 1e-6 else ceil(self.policy_delay / self.model_timestep)
 
     def set_xml_processor(self, processor):
         """
@@ -387,21 +394,22 @@ class MujocoEnv(metaclass=EnvMeta):
             raise ValueError("executing action in terminated episode")
 
         self.timestep += 1
+        num_steps_this_cycle = 0
 
         # Since the env.step frequency is slower than the mjsim timestep frequency, the internal controller will output
         # multiple torque commands in between new high level action commands. Therefore, we need to denote via
         # 'policy_step' whether the current step we're taking is simply an internal update of the controller,
         # or an actual policy update
-        policy_step = True
+        # policy_step = True
 
         # Loop through the simulation at the model timestep rate until we're ready to take the next policy step
         # (as defined by the control frequency specified at the environment level)
         for i in range(int(self.control_timestep / self.model_timestep)):
             self.sim.forward()
-            self._pre_action(action, policy_step)
+            self._pre_action(action, policy_step=(num_steps_this_cycle == self.num_policy_delay_steps))
             self.sim.step()
             self._update_observables()
-            policy_step = False
+            num_steps_this_cycle += 1
 
         # Note: this is done all at once to avoid floating point inaccuracies
         self.cur_time += self.control_timestep
