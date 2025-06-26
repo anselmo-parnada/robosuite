@@ -17,7 +17,7 @@ IMPEDANCE_MODES = {"fixed", "variable", "variable_kp"}
 # TODO: Maybe better naming scheme to differentiate between input / output min / max and pos/ori limits, etc.
 
 def generate_random_vector_w_specified_magnitude(shape : tuple, magnitude : float, np_random : np.random.Generator) -> npt.NDArray[np.float64]:   
-    out_vec = np_random.rand(*shape)
+    out_vec = np_random.random(*shape)
     out_vec /= np.linalg.norm(out_vec)
     out_vec *= magnitude
     return out_vec
@@ -313,10 +313,10 @@ class OSCWithNominalModel(OperationalSpaceController):
 
     def calculate_disturbance_joint_torque(self):
         disturbance_force = generate_random_vector_w_specified_magnitude(
-            (3,), self.np_random.rand() * self.max_disturbance_force, self.np_random)
+            (3,), self.np_random.random() * self.max_disturbance_force, self.np_random)
         
         disturbance_torque = generate_random_vector_w_specified_magnitude(
-            (3,), self.np_random.rand() * self.max_disturbance_torque, self.np_random)
+            (3,), self.np_random.random() * self.max_disturbance_torque, self.np_random)
         
         disturbance_wrench = np.concatenate([disturbance_force, disturbance_torque])
         np.dot(self.J_full.T, disturbance_wrench, out=self.disturbance_joint_torque)
