@@ -119,8 +119,8 @@ class OSCWithNominalModel(OperationalSpaceController):
         actuator_range,
         input_max=1,
         input_min=-1,
-        output_max=(0.1, 0.1, 0.1, 0.01, 0.01, 0.01),
-        output_min=(-0.1, -0.1, -0.1, -0.01, -0.01, -0.01),
+        output_max=(0.05, 0.05, 0.05, 0.5, 0.5, 0.5),
+        output_min=(-0.05, -0.05, -0.05, -0.5, -0.5, -0.5),
         kp=150,
         damping_ratio=1,
         impedance_mode="fixed",
@@ -136,18 +136,17 @@ class OSCWithNominalModel(OperationalSpaceController):
         uncouple_pos_ori=True,
         nominal_model_urdf_fp=None,
         armature=np.array([0., 0., 0., 0., 0., 0., 0.]),
-        enable_disturbance_wrench=False,
-        max_disturbance_force=0.0,
-        max_disturbance_torque=0.0,
+        enable_disturbance=False,
+        max_disturbance_torque_mag=0.0,
         np_random = None,
         **kwargs,  # does nothing; used so no error raised when dict is passed with extra terms used previously
     ):
         assert nominal_model_urdf_fp is not None, "Must provide a nominal model URDF filepath for OSCWithNominalModel"
         self.nominal_robot_model = RoboDynamicsModel(nominal_model_urdf_fp, armature=armature)
         
-        self.enable_disturbance_wrench = enable_disturbance_wrench
-        self.max_disturbance_force = max_disturbance_force
-        self.max_disturbance_torque = max_disturbance_torque
+        self.enable_disturbance = enable_disturbance
+        self.max_disturbance_torque = self.nums2array(max_disturbance_torque_mag, self.nominal_robot_model.n_dof)
+        self.min_disturbance_torque = -self.max_disturbance_torque
     
         super().__init__(
             sim,
@@ -175,7 +174,7 @@ class OSCWithNominalModel(OperationalSpaceController):
             **kwargs,
         )
 
-        if self.enable_disturbance_wrench:
+        if self.enable_disturbance:
             self.disturbance_joint_torque = np.empty(self.nominal_robot_model.n_dof, np.float64)
             self.calculate_disturbance_joint_torque()
         else:
@@ -305,21 +304,14 @@ class OSCWithNominalModel(OperationalSpaceController):
         # Always run superclass call for any cleanups at the end
         self.torques = self.torque_filter(torques)
 
-        if self.enable_disturbance_wrench:
+        if self.enable_disturbance:
             self.torques += self.disturbance_joint_torque
 
         super(OperationalSpaceController, self).run_controller()
         return self.torques
 
     def calculate_disturbance_joint_torque(self):
-        disturbance_force = generate_random_vector_w_specified_magnitude(
-            (3,), self.np_random.random() * self.max_disturbance_force, self.np_random)
-        
-        disturbance_torque = generate_random_vector_w_specified_magnitude(
-            (3,), self.np_random.random() * self.max_disturbance_torque, self.np_random)
-        
-        disturbance_wrench = np.concatenate([disturbance_force, disturbance_torque])
-        np.dot(self.J_full.T, disturbance_wrench, out=self.disturbance_joint_torque)
+        self.disturbance_joint_torque = self.np_random.uniform(self.min_disturbance_torque, self.max_disturbance_torque)
         
     @property
     def name(self):
