@@ -194,9 +194,13 @@ class MujocoEnv(metaclass=EnvMeta):
         if control_freq <= 0:
             raise SimulationError("Control frequency {} is invalid".format(control_freq))
         self.control_timestep = 1.0 / control_freq
-        if self.policy_delay < 0:
+        if self.policy_delay < 0 or self.policy_delay >= self.control_timestep:
             raise SimulationError("Policy delay {} is invalid".format(self.policy_delay))
         self.num_policy_delay_steps = 0 if self.policy_delay < 1e-6 else ceil(self.policy_delay / self.model_timestep)
+        if self.num_policy_delay_steps == int(self.control_timestep / self.model_timestep):
+            self.num_policy_delay_steps -= 1 
+            # Ensures that num_policy_delay_steps is less than the number of simulation steps
+            # per environment step. Without this, the action would be skipped every time.
 
     def set_xml_processor(self, processor):
         """
