@@ -49,6 +49,7 @@ class Controller(object, metaclass=abc.ABCMeta):
         else:
             self.controller_freq = int(controller_freq)
             self.dt = 1.0 / self.controller_freq
+            assert(self.dt >= macros.SIMULATION_TIMESTEP), f"Controller timestep ({self.dt} s) must smaller than or equal to simulation timestep ({macros.SIMULATION_TIMESTEP} s)!"
             
         # Actuator range
         self.actuator_min = actuator_range[0]
