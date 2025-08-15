@@ -11,6 +11,8 @@
 
   <visual>
     <map znear="0.001" />
+    <quality shadowsize="8192" />
+    <headlight ambient="0.1 0.1 0.1" diffuse="0.1 0.1 0.1" specular="0.1 0.1 0.1" active="0"/>
   </visual>
 
   <actuator>
