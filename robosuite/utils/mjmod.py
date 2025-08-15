@@ -227,8 +227,9 @@ class LightingModder(BaseModder):
         delta = self.random_state.uniform(
             low=-self.specular_perturbation_size,
             high=self.specular_perturbation_size,
-            size=3,
-        )
+            size=1,
+        ) * np.ones(3)
+        
         self.set_specular(
             name,
             self._defaults[name]["specular"] + delta,
@@ -244,8 +245,9 @@ class LightingModder(BaseModder):
         delta = self.random_state.uniform(
             low=-self.ambient_perturbation_size,
             high=self.ambient_perturbation_size,
-            size=3,
-        )
+            size=1,
+        ) * np.ones(3)
+        
         self.set_ambient(
             name,
             self._defaults[name]["ambient"] + delta,
@@ -261,8 +263,9 @@ class LightingModder(BaseModder):
         delta = self.random_state.uniform(
             low=-self.diffuse_perturbation_size,
             high=self.diffuse_perturbation_size,
-            size=3,
-        )
+            size=1,
+        ) * np.ones(3)
+        
         self.set_diffuse(
             name,
             self._defaults[name]["diffuse"] + delta,
