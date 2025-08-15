@@ -71,7 +71,7 @@ class RobotModel(MujocoXMLModel, metaclass=RobotModelMeta):
         self.set_joint_attribute(attrib="frictionloss", values=0.05 * np.ones(self.dof), force=False)
         self.set_joint_attribute(attrib="damping", values=0.01 * np.ones(self.dof), force=False)
         self.set_joint_attribute(
-            attrib="armature", values=np.array([5.0 / (i + 1) for i in range(self.dof)]), force=False
+            attrib="armature", values=np.array([3.0, 1.5, 1.0, 0.5, 0.5, 0.2, 0.1], np.float64), force=False
         )
 
     def set_base_xpos(self, pos):
