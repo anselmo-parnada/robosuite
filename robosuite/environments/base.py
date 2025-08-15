@@ -264,7 +264,7 @@ class MujocoEnv(metaclass=EnvMeta):
         # Use hard reset if requested
 
         if self.hard_reset and not self.deterministic_reset:
-            if self.renderer == "mujoco" or self.renderer == "default":
+            if self.renderer == "mujoco" or self.renderer == "default" or self.renderer == "nvisii":
                 self._destroy_viewer()
                 self._destroy_sim()
             self._load_model()
