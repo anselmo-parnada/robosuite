@@ -800,6 +800,10 @@ class TextureModder(BaseModder):
         sim (MjSim): MjSim object
 
         random_state (RandomState): instance of np.random.RandomState
+        
+        randomization_mode (str): either "geom" or "body". If "geom", randomizes textures
+            per geom. If "body", applies the same texture randomization to all geoms belonging
+            to the same body.
 
         geom_names ([string]): list of geom names to use for randomization. If not provided,
             all geoms are used for randomization.
@@ -829,6 +833,7 @@ class TextureModder(BaseModder):
         self,
         sim,
         random_state=None,
+        randomization_mode="geom", # "geom" or "body"
         geom_names=None,
         randomize_local=False,
         randomize_material=False,
@@ -838,11 +843,21 @@ class TextureModder(BaseModder):
         randomize_skybox=True,
     ):
         super().__init__(sim, random_state=random_state)
+        
+        self.randomization_mode = randomization_mode
+        assert self.randomization_mode in ["geom", "body"], "Invalid randomization mode: {}".format(self.randomization_mode)
 
         if geom_names is None:
             geom_names = self.sim.model.geom_names
         self.geom_names = geom_names
-
+        
+        self.body_geom_map = None
+        if self.randomization_mode == "body":
+            self.body_geom_map = defaultdict(list)
+            for geom_name in self.sim.model.geom_names:
+                body_name = self.model.body_id2name(self.model.geom_bodyid[self.model.geom_name2id(geom_name)])
+                self.body_geom_map[body_name].append(geom_name)
+            
         self.randomize_local = randomize_local
         self.randomize_material = randomize_material
         self.local_rgb_interpolation = local_rgb_interpolation
@@ -914,16 +929,23 @@ class TextureModder(BaseModder):
         for geoms that have no material.
         """
         self.whiten_materials()
-        for name in self.geom_names:
-            if self._check_geom_for_texture(name):
-                # geom has valid texture that can be randomized
-                self._randomize_texture(name)
-                # randomize material if requested
-                if self.randomize_material:
-                    self._randomize_material(name)
-            else:
-                # randomize geom color
-                self._randomize_geom_color(name)
+        
+        if self.randomization_mode == "geom":
+            for name in self.geom_names:
+                if self._check_geom_for_texture(name):
+                    # geom has valid texture that can be randomized
+                    self._randomize_texture(name)
+                    # randomize material if requested
+                    if self.randomize_material:
+                        self._randomize_material(name)
+                else:
+                    # randomize geom color
+                    self._randomize_geom_color(name)
+                    
+        elif self.randomization_mode == "body":
+            # NOTE: only randomize color supported for body randomization mode for now
+            for body_name in self.body_geom_map.keys():
+                self._randomize_body_color(body_name)
 
         if self.randomize_skybox:
             self._randomize_texture("skybox")
@@ -943,6 +965,31 @@ class TextureModder(BaseModder):
         else:
             rgb = self.random_state.uniform(0, 1, size=3)
         self.set_geom_rgb(name, rgb)
+        
+    def _randomize_body_color(self, name):
+        """
+        Helper function to randomize color of a specific geom
+
+        Args:
+            name (str): Name of the body to randomize geom colors for
+        """
+        random_color = self.random_state.uniform(0, 1, size=3)
+        
+        for geom_name in self.body_geom_map[name]:
+            if self._check_geom_for_texture(geom_name):
+                # geom has valid texture that can be randomized
+                self._randomize_texture(geom_name)
+                # randomize material if requested
+                if self.randomize_material:
+                    self._randomize_material(geom_name)
+            else:
+                if self.randomize_local:
+                    rgb = (1.0 - self.local_rgb_interpolation) * self._defaults[geom_name][
+                        "rgb"
+                    ] + self.local_rgb_interpolation * random_color
+                else:
+                    rgb = random_color
+                self.set_geom_rgb(geom_name, rgb)
 
     def _randomize_texture(self, name):
         """
