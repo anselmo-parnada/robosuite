@@ -1,3 +1,4 @@
+import copy
 import math
 
 import mujoco
@@ -138,6 +139,7 @@ class OSCWithNominalModel(OperationalSpaceController):
         armature=np.array([0., 0., 0., 0., 0., 0., 0.]),
         enable_disturbance=False,
         max_disturbance_torque_mag=0.0,
+        delay_control=False,
         np_random = None,
         **kwargs,  # does nothing; used so no error raised when dict is passed with extra terms used previously
     ):
@@ -190,6 +192,9 @@ class OSCWithNominalModel(OperationalSpaceController):
         self.joint_accel = None
         self.joint_accel_eul_diff = BackwardEulerDiff(self.dt)
         self.joint_accel_filter = LowPassFilter(1.0, self.dt)
+        
+        self.delay_control = delay_control
+        self.torques_buffer = None
 
 
     def update(self, force=False):
@@ -290,19 +295,33 @@ class OSCWithNominalModel(OperationalSpaceController):
             decoupled_wrench = np.dot(self.nominal_robot_model.lambda_full, desired_wrench)
 
         # Gamma (without null torques) = J^T * F + gravity compensations
-        torques = np.dot(self.J_full.T, decoupled_wrench)
+        computed_torques = np.dot(self.J_full.T, decoupled_wrench)
 
         # Calculate and add nullspace torques (nullspace_matrix^T * Gamma_null) to final torques
         # Note: Gamma_null = desired nullspace pose torques, assumed to be positional joint control relative
         #                     to the initial joint positions
-        torques += nullspace_torques(
+        computed_torques += nullspace_torques(
             self.mass_matrix, self.nominal_robot_model.nullspace_matrix, self.initial_joint, self.joint_pos, self.joint_vel
         )
 
-        torques += self.torque_compensation
+        computed_torques += self.torque_compensation
+        
+        filtered_torques = self.torque_filter(computed_torques)
 
-        # Always run superclass call for any cleanups at the end
-        self.torques = self.torque_filter(torques)
+        # Apply control delay
+        if self.delay_control:
+            if self.torques_buffer is None:
+                # On first step, apply gravity compensation only
+                self.torques_buffer = np.empty_like(filtered_torques)
+                self.torques = self.torque_compensation.copy()
+            else:
+                # Apply what was computed in the previous step
+                 self.torques[:] = self.torques_buffer[:]
+
+            # Store current result for next step
+            self.torques_buffer[:] = filtered_torques[:]
+        else:
+            self.torques = filtered_torques
 
         if self.enable_disturbance:
             self.torques += self.disturbance_joint_torque
