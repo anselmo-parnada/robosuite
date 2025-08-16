@@ -45,6 +45,11 @@ class LowPassFilter:
         self.y = None
         self.temp_1 = None
         self.temp_2 = None
+        
+    def reset(self):
+        self.y = None
+        self.temp_1 = None
+        self.temp_2 = None
 
     def __call__(self, x):
         assert isinstance(x, (np.ndarray, int, float)), "Input must be an instance of np.ndarray, int or float"
