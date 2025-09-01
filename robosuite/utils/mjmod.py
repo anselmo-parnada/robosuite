@@ -1579,10 +1579,14 @@ class DynamicsModder(BaseModder):
         randomize_stiffness=True,
         randomize_frictionloss=True,
         randomize_damping=True,
+        randomize_stribeck=True,
         randomize_armature=True,
         stiffness_perturbation_ratio=0.1,
         frictionloss_perturbation_size=0.05,
         damping_perturbation_size=0.01,
+        stribeck_stiction_ratio_perturbation_size=0.5,
+        stribeck_veloctiy_perturbation_size=0.5,
+        stribeck_exponent_perturbation_size=0.5,
         armature_perturbation_ratio=0.01,
     ):
         super().__init__(sim=sim, random_state=random_state)
@@ -1699,6 +1703,24 @@ class DynamicsModder(BaseModder):
                 "type": "size",
                 "clip": (0.1, np.inf),
             },
+            "stribeck_stiction_ratio" : {
+                "randomize": randomize_stribeck,
+                "perturbation": stribeck_stiction_ratio_perturbation_size,
+                "type": "size",
+                "clip": (1.0, 2.0),
+            },
+            "stribeck_velocity" : {
+                "randomize": randomize_stribeck,
+                "perturbation": stribeck_veloctiy_perturbation_size,
+                "type": "size",
+                "clip": (0.1, 1.0),
+            },
+            "stribeck_exponent" : {
+                "randomize": randomize_stribeck,
+                "perturbation": stribeck_exponent_perturbation_size,
+                "type": "size",
+                "clip": (1.0, 2.0),
+            },
             "armature": {
                 "randomize": randomize_armature,
                 "perturbation": armature_perturbation_ratio,
@@ -1754,6 +1776,9 @@ class DynamicsModder(BaseModder):
                 "stiffness": self.sim.model.jnt_stiffness[joint_id],
                 "frictionloss": np.array(self.sim.model.dof_frictionloss[dof_idx]),
                 "damping": np.array(self.sim.model.dof_damping[dof_idx]),
+                "stribeck_stiction_ratio": np.array(self.sim.model.jnt_user[dof_idx, 0]),
+                "stribeck_velocity": np.array(self.sim.model.jnt_user[dof_idx, 1]),
+                "stribeck_exponent": np.array(self.sim.model.jnt_user[dof_idx, 2]),
                 "armature": np.array(self.sim.model.dof_armature[dof_idx]),
             }
 
@@ -2056,6 +2081,63 @@ class DynamicsModder(BaseModder):
         if self.sim.model.jnt_type[jnt_id] != 0:
             dof_idx = [i for i, v in enumerate(self.sim.model.dof_jntid) if v == jnt_id]
             self.sim.model.dof_damping[dof_idx] = val
+            
+    def mod_stribeck_stiction_ratio(self, name, val):
+        """
+        Modifies the @name's joint stribeck_stiction_ratio within the simulation.
+        See http://www.mujoco.org/book/XMLreference.html#joint for more details.
+
+        NOTE: If the requested joint is a free joint, it will be ignored since it does not
+            make physical sense to have stribeck_stiction_ratio associated with this joint (air drag / damping
+            is already captured implicitly by the medium density / viscosity values)
+
+        Args:
+            name (str): Name for this element.
+            val (float): New damping.
+        """
+        # Modify this value (only if it's not a free joint)
+        jnt_id = self.sim.model.joint_name2id(name)
+        if self.sim.model.jnt_type[jnt_id] != 0:
+            dof_idx = [i for i, v in enumerate(self.sim.model.dof_jntid) if v == jnt_id]
+            self.sim.model.jnt_user[dof_idx, 0] = val
+            
+    def mod_stribeck_velocity(self, name, val):
+        """
+        Modifies the @name's joint stribeck_velocity within the simulation.
+        See http://www.mujoco.org/book/XMLreference.html#joint for more details.
+
+        NOTE: If the requested joint is a free joint, it will be ignored since it does not
+            make physical sense to have stribeck_velocity associated with this joint (air drag / damping
+            is already captured implicitly by the medium density / viscosity values)
+
+        Args:
+            name (str): Name for this element.
+            val (float): New damping.
+        """
+        # Modify this value (only if it's not a free joint)
+        jnt_id = self.sim.model.joint_name2id(name)
+        if self.sim.model.jnt_type[jnt_id] != 0:
+            dof_idx = [i for i, v in enumerate(self.sim.model.dof_jntid) if v == jnt_id]
+            self.sim.model.jnt_user[dof_idx, 1] = val
+            
+    def mod_stribeck_exponent(self, name, val):
+        """
+        Modifies the @name's joint stribeck_exponent within the simulation.
+        See http://www.mujoco.org/book/XMLreference.html#joint for more details.
+
+        NOTE: If the requested joint is a free joint, it will be ignored since it does not
+            make physical sense to have stribeck_exponent associated with this joint (air drag / damping
+            is already captured implicitly by the medium density / viscosity values)
+
+        Args:
+            name (str): Name for this element.
+            val (float): New damping.
+        """
+        # Modify this value (only if it's not a free joint)
+        jnt_id = self.sim.model.joint_name2id(name)
+        if self.sim.model.jnt_type[jnt_id] != 0:
+            dof_idx = [i for i, v in enumerate(self.sim.model.dof_jntid) if v == jnt_id]
+            self.sim.model.jnt_user[dof_idx, 2] = val
 
     def mod_armature(self, name, val):
         """
@@ -2097,6 +2179,9 @@ class DynamicsModder(BaseModder):
             "stiffness",
             "frictionloss",
             "damping",
+            "stribeck_stiction_ratio",
+            "stribeck_velocity",
+            "stribeck_exponent",
             "armature",
         }
 
