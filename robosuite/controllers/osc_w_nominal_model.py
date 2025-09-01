@@ -140,6 +140,7 @@ class OSCWithNominalModel(OperationalSpaceController):
         enable_disturbance=False,
         max_disturbance_torque_mag=0.0,
         delay_control=False,
+        simulate_stribeck_friction=True,
         np_random = None,
         **kwargs,  # does nothing; used so no error raised when dict is passed with extra terms used previously
     ):
@@ -195,7 +196,8 @@ class OSCWithNominalModel(OperationalSpaceController):
         
         self.delay_control = delay_control
         self.torques_buffer = None
-
+        
+        self.simulate_stribeck_friction = simulate_stribeck_friction
 
     def update(self, force=False):
         """
@@ -316,21 +318,54 @@ class OSCWithNominalModel(OperationalSpaceController):
                 self.torques = self.torque_compensation.copy()
             else:
                 # Apply what was computed in the previous step
-                 self.torques[:] = self.torques_buffer[:]
+                self.torques[:] = self.torques_buffer[:]
 
             # Store current result for next step
             self.torques_buffer[:] = filtered_torques[:]
         else:
             self.torques = filtered_torques
-
+            
         if self.enable_disturbance:
             self.torques += self.disturbance_joint_torque
+            
+        if self.simulate_stribeck_friction:
+            self.torques -= self.calculate_stribeck_friction()
 
         super(OperationalSpaceController, self).run_controller()
         return self.torques
 
     def calculate_disturbance_joint_torque(self):
         self.disturbance_joint_torque = self.np_random.uniform(self.min_disturbance_torque, self.max_disturbance_torque)
+        
+    def calculate_stribeck_friction(self):
+        v = self.joint_vel
+        Fc = self.sim.model.dof_frictionloss[self.joint_index]       # Coulomb friction already in MuJoCo
+        Fs = self.sim.model.jnt_user[self.joint_index, 0] * Fc       # Static friction (expressed as multiple of Coulomb friction)
+        vs = self.sim.model.jnt_user[self.joint_index, 1]            # Stribeck velocity
+        alpha = self.sim.model.jnt_user[self.joint_index, 2]         # Stribeck exponent
+
+        # Extra over Coulomb (MuJoCo already handles Fc + viscous)
+        stribeck_mag = (Fs - Fc) * np.exp(-(np.abs(v) / np.maximum(vs, 1e-9)) ** alpha)
+
+        # thresholds
+        v_eps = 1e-4   # small velocity deadband
+        tau_eps = 1e-6 # small torque margin
+
+        tau_f = np.zeros_like(v)
+
+        # 1) STICK: near-zero velocity and not exceeding breakaway
+        stick_mask = (np.abs(v) < v_eps) & (np.abs(self.torques) <= (Fs - tau_eps))
+
+        # In stick, subtract the command up to the EXTRA margin (Fs - Fc)
+        extra_max = np.maximum(Fs - Fc, 0)
+        tau_f[stick_mask] = np.clip(self.torques[stick_mask], -extra_max[stick_mask], extra_max[stick_mask])
+
+        # 2) SLIP: otherwise, subtract along sign of velocity (so net opposes motion)
+        slip_mask = ~stick_mask
+        tau_f[slip_mask] = np.sign(v[slip_mask]) * stribeck_mag[slip_mask]
+
+        # IMPORTANT: caller does: self.torques -= tau_f
+        return tau_f
         
     @property
     def name(self):

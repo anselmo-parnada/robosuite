@@ -4,7 +4,7 @@
   <option impratio="20" cone="elliptic" density="1.2" viscosity="0.00002">
     <flag warmstart="enable"/> 
   </option>
-  <size nconmax="5000" njmax="5000"/>
+  <size nconmax="5000" njmax="5000" nuser_jnt="3"/>
 
   <asset>
   </asset>

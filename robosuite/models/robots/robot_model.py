@@ -70,6 +70,7 @@ class RobotModel(MujocoXMLModel, metaclass=RobotModelMeta):
         # By default, set small frictionloss and armature values
         self.set_joint_attribute(attrib="frictionloss", values=1.0 * np.ones(self.dof), force=False)
         self.set_joint_attribute(attrib="damping", values=0.5 * np.ones(self.dof), force=False)
+        self.set_joint_attribute(attrib="user", values=np.tile(np.array([1.5, 0.25, 1.5]), (self.dof,1)), force=False)
         self.set_joint_attribute(
             attrib="armature", values=np.array([3.0, 1.5, 1.0, 0.5, 0.5, 0.2, 0.1], np.float64), force=False
         )
@@ -107,13 +108,21 @@ class RobotModel(MujocoXMLModel, metaclass=RobotModelMeta):
         Raises:
             AssertionError: [Inconsistent dimension sizes]
         """
-        assert values.size == len(self._elements["joints"]), (
+        assert len(values) == len(self._elements["joints"]), (
             "Error setting joint attributes: "
             + "Values must be same size as joint dimension. Got {}, expected {}!".format(values.size, self.dof)
         )
+        
+        assert values.ndim < 3, "Only 1 or 2 dimensional attributes can be set"
+        
+        is_one_dim = values.ndim == 1
+        
         for i, joint in enumerate(self._elements["joints"]):
             if force or joint.get(attrib, None) is None:
-                joint.set(attrib, array_to_string(np.array([values[i]])))
+                if is_one_dim:
+                    joint.set(attrib, array_to_string(np.array([values[i]])))
+                else:
+                    joint.set(attrib, array_to_string(values[i]))
 
     def add_mount(self, mount):
         """
