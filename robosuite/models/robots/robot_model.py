@@ -68,8 +68,8 @@ class RobotModel(MujocoXMLModel, metaclass=RobotModelMeta):
         self.cameras = self.get_element_names(self.worldbody, "camera")
 
         # By default, set small frictionloss and armature values
-        self.set_joint_attribute(attrib="frictionloss", values=0.05 * np.ones(self.dof), force=False)
-        self.set_joint_attribute(attrib="damping", values=0.01 * np.ones(self.dof), force=False)
+        self.set_joint_attribute(attrib="frictionloss", values=1.0 * np.ones(self.dof), force=False)
+        self.set_joint_attribute(attrib="damping", values=0.5 * np.ones(self.dof), force=False)
         self.set_joint_attribute(
             attrib="armature", values=np.array([3.0, 1.5, 1.0, 0.5, 0.5, 0.2, 0.1], np.float64), force=False
         )
