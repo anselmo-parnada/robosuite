@@ -21,7 +21,7 @@
                 <geom type="mesh" name="ft_sensor_collision" rgba="0 0 1 1" contype="0" mesh="ft_sensor"/>
                 <body name="peg_and_camera" pos="0 0 0.0375" quat="1 0 0 0">
                     <inertial pos="0.04835 0.01068 -0.00317" mass="0.14730" diaginertia="0.00011 0.00020 0.00024" />
-                    <camera name="gripper_cam" pos="0.06207 0 0.0007" quat="0.271 0.653 0.653 0.271" resolution="424 240" sensorsize="0.00394 0.00248" focal="0.00193 0.00193"/>
+                    <camera name="gripper_cam" pos="0.064 0 0.001" quat="0.271 0.653 0.653 0.271" resolution="424 240" sensorsize="0.00394 0.00248" focal="0.00193 0.00193"/>
                     <geom type="mesh" name="headless_peg_and_camera_viz" rgba="0.45 0.45 0.45 1" contype="0" conaffinity="0" group="1" mesh="headless_peg_and_camera"/>
                     <geom type="mesh" name="headless_peg_and_camera_collision" rgba="0 0 1 1" contype="0" group="0" mesh="headless_peg_and_camera"/>
                     <geom type="mesh" name="peg_head_viz" pos="0 0 0.012" rgba="0.45 0.45 0.45 1" contype="0" conaffinity="0" group="1" mesh="peg_head" friction="0.0 0.005 0.0001" />
