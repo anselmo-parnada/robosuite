@@ -141,6 +141,7 @@ class OSCWithNominalModel(OperationalSpaceController):
         max_disturbance_torque_mag=0.0,
         delay_control=False,
         simulate_stribeck_friction=True,
+        perfect_gravity_compensation=False,
         np_random = None,
         **kwargs,  # does nothing; used so no error raised when dict is passed with extra terms used previously
     ):
@@ -198,6 +199,7 @@ class OSCWithNominalModel(OperationalSpaceController):
         self.torques_buffer = None
         
         self.simulate_stribeck_friction = simulate_stribeck_friction
+        self.perfect_gravity_compensation = perfect_gravity_compensation
 
     def update(self, force=False):
         """
@@ -370,6 +372,21 @@ class OSCWithNominalModel(OperationalSpaceController):
     @property
     def name(self):
         return "OSC_NOMINAL_MODEL_" + self.name_suffix
+    
+    @property
+    def torque_compensation(self):
+        """
+        Gravity compensation for this robot arm
+
+        Returns:
+            np.array: torques
+        """
+        if self.perfect_gravity_compensation:
+            return self.sim.data.qfrc_bias[self.joint_index]
+        else:
+            self.nominal_robot_model.compute_gravity_torque(self.joint_pos)
+            self.nominal_robot_model.compute_coriolis_matrix(self.joint_pos, self.joint_vel)
+            return self.nominal_robot_model.torque_gravity + self.nominal_robot_model.coriolis_matrix @ self.joint_vel
     
     def update_base_pose(self, base_pos, base_ori):
         """
