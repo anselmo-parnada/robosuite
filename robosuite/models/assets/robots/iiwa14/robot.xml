@@ -30,19 +30,19 @@
       <geom type="mesh" rgba="0.4 0.4 0.4 1" contype="0" name="link_0_collision" mesh="link_0"/>
       <body name="link_1" pos="0 0 0.1575">
         <inertial mass="5.76" pos="0 -0.03 0.12" diaginertia="0.0333 0.033 0.0123"/>
-        <joint name="joint_1" pos="0 0 0" axis="0 0 1" limited="true" range="-2.96706 2.96706" frictionloss="3.4" damping="0.45" user="1.5 0.15 1.5"/>
+        <joint name="joint_1" pos="0 0 0" axis="0 0 1" limited="true" range="-2.96706 2.96706" frictionloss="3.4" damping="0.45" user="1.5 0.15 1.5" armature="3.0"/>
         <geom type="mesh" contype="0" conaffinity="0" group="1" material="gray" name="link_1_visual" mesh="link_1"/>
         <geom type="mesh" rgba="0.4 0.4 0.4 1" contype="0" name="link_1_collision" mesh="link_1"/>
         <body name="link_2" pos="0 0 0.2025" quat="0 0 1 1">
           <inertial mass="6.35" pos="0.0003 0.059 0.042" diaginertia="0.0305 0.0304 0.011" quat="0 0 1 1"/>
-          <joint name="joint_2" pos="0 0 0" axis="0 0 1" limited="true" range="-2.0944 2.0944" frictionloss="1.93" damping="0.45" user="1.5 0.15 1.5"/>
+          <joint name="joint_2" pos="0 0 0" axis="0 0 1" limited="true" range="-2.0944 2.0944" frictionloss="1.93" damping="0.45" user="1.5 0.15 1.5" armature="1.75"/>
           <geom type="mesh" contype="0" conaffinity="0" group="1" material="orange" name="link_2_orange_visual" mesh="link_2_orange"/>
           <geom type="mesh" contype="0" conaffinity="0" group="1" material="gray" name="link_2_gray_visual" mesh="link_2_gray"/>
           <geom type="mesh" rgba="0.4 0.4 0.4 1" contype="0" name="link_2_orange_collision" mesh="link_2_orange"/>
           <geom type="mesh" rgba="0.4 0.4 0.4 1" contype="0" name="link_2_gray_collision" mesh="link_2_gray"/>
           <body name="link_3" pos="0 0.2045 0" quat="0 0 1 1">
             <inertial mass="3.5" pos="0 0.03 0.13" diaginertia="0.025 0.0238 0.0076"/>
-            <joint name="joint_3" pos="0 0 0" axis="0 0 1" limited="true" range="-2.96706 2.96706" frictionloss="1.74" damping="0.45" user="1.5 0.15 1.5"/>
+            <joint name="joint_3" pos="0 0 0" axis="0 0 1" limited="true" range="-2.96706 2.96706" frictionloss="1.74" damping="0.45" user="1.5 0.15 1.5" armature="1.0"/>
             <geom type="mesh" contype="0" conaffinity="0" group="1" material="gray" name="link_3_visual" mesh="link_3"/>
             <geom type="mesh" contype="0" conaffinity="0" group="1" material="light_gray" name="link_3_band_visual" mesh="band"/>
             <geom type="mesh" contype="0" conaffinity="0" group="1" material="black" name="link_3_logo_visual" mesh="kuka"/>
@@ -51,14 +51,14 @@
             <geom type="mesh" rgba="0.4 0.4 0.4 1" contype="0" name="link_3_logo_collision" mesh="kuka"/>
             <body name="link_4" pos="0 0 0.2155" quat="1 1 0 0">
               <inertial mass="3.5" pos="0 0.067 0.034" diaginertia="0.017 0.0164 0.006" quat="1 1 0 0"/>
-              <joint name="joint_4" pos="0 0 0" axis="0 0 1" limited="true" range="-2.0944 2.0944" frictionloss="1.44" damping="0.45" user="1.5 0.15 1.5"/>
+              <joint name="joint_4" pos="0 0 0" axis="0 0 1" limited="true" range="-2.0944 2.0944" frictionloss="1.44" damping="0.45" user="1.5 0.15 1.5" armature="0.85"/>
               <geom type="mesh" contype="0" conaffinity="0" group="1" material="orange" name="link_4_orange_visual" mesh="link_4_orange"/>
               <geom type="mesh" contype="0" conaffinity="0" group="1" material="gray" name="link_4_gray_visual" mesh="link_4_gray"/>
               <geom type="mesh" rgba="0.4 0.4 0.4 1" contype="0" name="link_4_orange_collision" mesh="link_4_orange"/>
               <geom type="mesh" rgba="0.4 0.4 0.4 1" contype="0" name="link_4_gray_collision" mesh="link_4_gray"/>
               <body name="link_5" pos="0 0.1845 0" quat="0 0 1 1">
                 <inertial mass="3.5" pos="0.0001 0.021 0.076" diaginertia="0.01 0.0087 0.00449"/>
-                <joint name="joint_5" pos="0 0 0" axis="0 0 1" limited="true" range="-2.96706 2.96706" frictionloss="2.26" damping="0.45" user="1.5 0.15 1.5"/>
+                <joint name="joint_5" pos="0 0 0" axis="0 0 1" limited="true" range="-2.96706 2.96706" frictionloss="2.26" damping="0.45" user="1.5 0.15 1.5" armature="0.5"/>
                 <geom type="mesh" contype="0" conaffinity="0" group="1" material="gray" name="link_5_visual" mesh="link_5"/>
                 <geom type="mesh" contype="0" conaffinity="0" group="1" material="light_gray" name="link_5_band_visual" mesh="band"/>
                 <geom type="mesh" contype="0" conaffinity="0" group="1" material="black" name="link_5_logo_visual" mesh="kuka"/>
@@ -67,14 +67,14 @@
                 <geom type="mesh" rgba="0.4 0.4 0.4 1" contype="0" name="link_5_logo_collision" mesh="kuka"/>
                 <body name="link_6" pos="0 0 0.2155" quat="1 1 0 0">
                   <inertial mass="1.8" pos="0 0.0006 0.0004" diaginertia="0.0049 0.0047 0.0036" quat="1 1 0 0"/>
-                  <joint name="joint_6" pos="0 0 0" axis="0 0 1" limited="true" range="-2.0944 2.0944" frictionloss="1.37" damping="0.45" user="1.5 0.15 1.5"/>
+                  <joint name="joint_6" pos="0 0 0" axis="0 0 1" limited="true" range="-2.0944 2.0944" frictionloss="1.37" damping="0.45" user="1.5 0.15 1.5" armature="0.2"/>
                   <geom type="mesh" contype="0" conaffinity="0" group="1" material="orange" name="link_6_orange_visual" mesh="link_6_orange"/>
                   <geom type="mesh" contype="0" conaffinity="0" group="1" material="gray" name="link_6_gray_visual" mesh="link_6_gray"/>
                   <geom type="mesh" rgba="0.4 0.4 0.4 1" contype="0" name="link_6_orange_collision" mesh="link_6_orange"/>
                   <geom type="mesh" rgba="0.4 0.4 0.4 1" contype="0" name="link_6_gray_collision" mesh="link_6_gray"/>
                   <body name="link_7" pos="0 0.081 0" quat="0 0 1 1">
                     <inertial mass="1.2" pos="0 0 0.02" diaginertia="0.001 0.001 0.001"/>
-                    <joint name="joint_7" pos="0 0 0" axis="0 0 1" limited="true" range="-3.05433 3.05433" frictionloss="1.36" damping="0.45" user="1.5 0.15 1.5"/>
+                    <joint name="joint_7" pos="0 0 0" axis="0 0 1" limited="true" range="-3.05433 3.05433" frictionloss="1.36" damping="0.45" user="1.5 0.15 1.5" armature="0.1"/>
                     <geom type="mesh" contype="0" conaffinity="0" group="1" material="gray" name="link_7_visual" mesh="link_7"/>
                     <geom type="mesh" rgba="0.4 0.4 0.4 1" contype="0" name="link_7_collision" mesh="link_7"/>
                     <body name="right_hand" pos="0 0 0.045" quat="0 0 0 1">
