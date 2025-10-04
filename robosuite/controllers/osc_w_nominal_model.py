@@ -135,6 +135,7 @@ class OSCWithNominalModel(OperationalSpaceController):
         control_ori=True,
         control_delta=True,
         uncouple_pos_ori=True,
+        stiffness_in_tool_frame=True,
         nominal_model_urdf_fp=None,
         armature=np.array([0., 0., 0., 0., 0., 0., 0.]),
         enable_disturbance=False,
@@ -176,6 +177,7 @@ class OSCWithNominalModel(OperationalSpaceController):
             control_ori=control_ori,
             control_delta=control_delta,
             uncouple_pos_ori=uncouple_pos_ori,
+            stiffness_in_tool_frame=stiffness_in_tool_frame,
             np_random=np_random,
             **kwargs,
         )
@@ -286,12 +288,19 @@ class OSCWithNominalModel(OperationalSpaceController):
         position_error = desired_pos - self.ee_pos
         vel_pos_error = -self.ee_pos_vel
 
+        vel_ori_error = -self.ee_ori_vel
+
+        if self.stiffness_in_tool_frame:
+            # Transform the position error to be in the tool frame
+            position_error = self.ee_ori_mat @ position_error
+            vel_pos_error = self.ee_ori_mat @ vel_pos_error
+            ori_error = self.ee_ori_mat @ ori_error
+            vel_ori_error = self.ee_ori_mat @ vel_ori_error
+
         # F_r = kp * pos_err + kd * vel_err
         desired_force = np.multiply(np.array(position_error), np.array(self.kp[0:3])) + np.multiply(
             vel_pos_error, self.kd[0:3]
         )
-
-        vel_ori_error = -self.ee_ori_vel
 
         # Tau_r = kp * ori_err + kd * vel_err
         desired_torque = np.multiply(np.array(ori_error), np.array(self.kp[3:6])) + np.multiply(
@@ -316,6 +325,12 @@ class OSCWithNominalModel(OperationalSpaceController):
         else:
             desired_wrench = np.concatenate([desired_force, desired_torque])
             decoupled_wrench = np.dot(lambda_full, desired_wrench)
+
+        if self.stiffness_in_tool_frame:
+            # Transform the desired force and torque to be in the world frame
+            decoupled_wrench[:3] = self.ee_ori_mat.T @ decoupled_wrench[:3]
+            decoupled_wrench[3:] = self.ee_ori_mat.T @ decoupled_wrench[3:]
+        
         # Gamma (without null torques) = J^T * F + gravity compensations
         computed_torques = np.dot(self.J_full.T, decoupled_wrench)
 
