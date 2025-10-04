@@ -142,6 +142,7 @@ class OSCWithNominalModel(OperationalSpaceController):
         delay_control=False,
         simulate_stribeck_friction=True,
         perfect_gravity_compensation=False,
+        perfect_inertial_parameters=False,
         np_random = None,
         **kwargs,  # does nothing; used so no error raised when dict is passed with extra terms used previously
     ):
@@ -151,6 +152,7 @@ class OSCWithNominalModel(OperationalSpaceController):
         self.enable_disturbance = enable_disturbance
         self.max_disturbance_torque = self.nums2array(max_disturbance_torque_mag, self.nominal_robot_model.n_dof)
         self.min_disturbance_torque = -self.max_disturbance_torque
+        self.perfect_inertial_parameters = perfect_inertial_parameters
     
         super().__init__(
             sim,
@@ -231,8 +233,15 @@ class OSCWithNominalModel(OperationalSpaceController):
             self.ee_pos_vel = self.J_pos @ self.joint_vel
             self.ee_ori_vel = self.J_ori @ self.joint_vel
 
-            self.mass_matrix = self.nominal_robot_model.mass_matrix
-            self.mass_matrix_inv = self.nominal_robot_model.mass_matrix_inv
+            if self.perfect_inertial_parameters:
+                mass_matrix = np.ndarray(shape=(self.sim.model.nv, self.sim.model.nv), dtype=np.float64, order="C")
+                mujoco.mj_fullM(self.sim.model._model, mass_matrix, self.sim.data.qM)
+                mass_matrix = np.reshape(mass_matrix, (len(self.sim.data.qvel), len(self.sim.data.qvel)))
+                self.mass_matrix = mass_matrix[self.qvel_index, :][:, self.qvel_index]
+                self.mass_matrix_inv = np.linalg.inv(self.mass_matrix)
+            else:
+                self.mass_matrix = self.nominal_robot_model.mass_matrix
+                self.mass_matrix_inv = self.nominal_robot_model.mass_matrix_inv
 
             # Clear self.new_update
             self.new_update = False
@@ -288,16 +297,25 @@ class OSCWithNominalModel(OperationalSpaceController):
         desired_torque = np.multiply(np.array(ori_error), np.array(self.kp[3:6])) + np.multiply(
             vel_ori_error, self.kd[3:6]
         )
+        
+        if self.perfect_inertial_parameters:
+            lambda_full, lambda_pos, lambda_ori, nullspace_matrix = opspace_matrices(
+                self.mass_matrix, self.J_full, self.J_pos, self.J_ori
+            )
+        else:
+            lambda_full = self.nominal_robot_model.lambda_full
+            lambda_pos = self.nominal_robot_model.lambda_pos
+            lambda_ori = self.nominal_robot_model.lambda_ori
+            nullspace_matrix = self.nominal_robot_model.nullspace_matrix
 
         # Decouples desired positional control from orientation control
         if self.uncoupling:
-            decoupled_force = np.dot(self.nominal_robot_model.lambda_pos, desired_force)
-            decoupled_torque = np.dot(self.nominal_robot_model.lambda_ori, desired_torque)
+            decoupled_force = np.dot(lambda_pos, desired_force)
+            decoupled_torque = np.dot(lambda_ori, desired_torque)
             decoupled_wrench = np.concatenate([decoupled_force, decoupled_torque])
         else:
             desired_wrench = np.concatenate([desired_force, desired_torque])
-            decoupled_wrench = np.dot(self.nominal_robot_model.lambda_full, desired_wrench)
-
+            decoupled_wrench = np.dot(lambda_full, desired_wrench)
         # Gamma (without null torques) = J^T * F + gravity compensations
         computed_torques = np.dot(self.J_full.T, decoupled_wrench)
 
@@ -305,7 +323,7 @@ class OSCWithNominalModel(OperationalSpaceController):
         # Note: Gamma_null = desired nullspace pose torques, assumed to be positional joint control relative
         #                     to the initial joint positions
         computed_torques += nullspace_torques(
-            self.mass_matrix, self.nominal_robot_model.nullspace_matrix, self.initial_joint, self.joint_pos, self.joint_vel
+            self.mass_matrix, nullspace_matrix, self.initial_joint, self.joint_pos, self.joint_vel
         )
 
         computed_torques += self.torque_compensation
