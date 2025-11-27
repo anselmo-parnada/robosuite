@@ -86,6 +86,7 @@ class SingleArm(Manipulator):
         self.recent_ee_vel = None  # Current and last eef velocity
         self.recent_ee_vel_buffer = None  # RingBuffer holding prior 10 values of velocity values
         self.recent_ee_acc = None  # Current and last eef acceleration
+        self.eef_pose_buffer = None  # RingBuffer holding prior 10 values of eef pose (pos + ori (quat))
 
         super().__init__(
             robot_type=robot_type,
@@ -197,6 +198,7 @@ class SingleArm(Manipulator):
         self.recent_ee_vel = DeltaBuffer(dim=6)
         self.recent_ee_vel_buffer = RingBuffer(dim=6, length=10)
         self.recent_ee_acc = DeltaBuffer(dim=6)
+        self.eef_pose_buffer = RingBuffer(dim=7, length=10)
 
     def setup_references(self):
         """
@@ -221,7 +223,7 @@ class SingleArm(Manipulator):
         self.eef_site_id = self.sim.model.site_name2id(self.gripper.important_sites["grip_site"])
         self.eef_cylinder_id = self.sim.model.site_name2id(self.gripper.important_sites["grip_cylinder"])
 
-    def control(self, num_sim_steps, action, policy_step=False):
+    def control(self, num_sim_steps, action, policy_step=False, pre_episode=False):
         """
         Actuate the robot with the
         passed joint velocities and gripper control.
@@ -263,6 +265,8 @@ class SingleArm(Manipulator):
 
             # Apply joint torque control
             self.sim.data.ctrl[self._ref_joint_actuator_indexes] = self.torques
+            if not pre_episode:
+                self.eef_pose_buffer.push(np.concatenate((self.controller.ee_pos, T.mat2quat(self.controller.ee_ori_mat))))
         
         # Get gripper action, if applicable
         if self.has_gripper:
