@@ -1816,7 +1816,7 @@ class DynamicsModder(BaseModder):
                             perturbation = self.random_state.rand()
                             perturbation = settings["perturbation"] * (-1 + 2 * perturbation)
                             perturbation = np.clip(perturbation, *settings["clip"])
-                            rotation_axis = self.random_state.rand(3)
+                            rotation_axis = self.random_state.randn(3)
                             rotation_axis /= np.linalg.norm(rotation_axis)
                             rotation_axis *= perturbation
                             val = trans.quat_multiply(trans.axisangle2quat(rotation_axis), val)
