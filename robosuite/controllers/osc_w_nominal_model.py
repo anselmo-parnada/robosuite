@@ -139,6 +139,7 @@ class OSCWithNominalModel(OperationalSpaceController):
         nominal_model_urdf_fp=None,
         armature=np.array([0., 0., 0., 0., 0., 0., 0.]),
         enable_disturbance=False,
+        custom_disturbance_torque_fn=None,
         max_disturbance_torque_mag=0.0,
         delay_control=False,
         simulate_stribeck_friction=True,
@@ -151,8 +152,10 @@ class OSCWithNominalModel(OperationalSpaceController):
         self.nominal_robot_model = RoboDynamicsModel(nominal_model_urdf_fp, armature=armature)
         
         self.enable_disturbance = enable_disturbance
-        self.max_disturbance_torque = self.nums2array(max_disturbance_torque_mag, self.nominal_robot_model.n_dof)
-        self.min_disturbance_torque = -self.max_disturbance_torque
+        self.custom_disturbance_torques_fn = custom_disturbance_torque_fn
+        if self.custom_disturbance_torques_fn is None and self.enable_disturbance:
+            self.max_disturbance_torque = self.nums2array(max_disturbance_torque_mag, self.nominal_robot_model.n_dof)
+            self.min_disturbance_torque = -self.max_disturbance_torque
         self.perfect_inertial_parameters = perfect_inertial_parameters
     
         super().__init__(
@@ -182,7 +185,7 @@ class OSCWithNominalModel(OperationalSpaceController):
             **kwargs,
         )
 
-        if self.enable_disturbance:
+        if self.enable_disturbance and self.custom_disturbance_torques_fn is None:
             self.disturbance_joint_torque = np.empty(self.nominal_robot_model.n_dof, np.float64)
             self.calculate_disturbance_joint_torque()
         else:
@@ -361,6 +364,8 @@ class OSCWithNominalModel(OperationalSpaceController):
             self.torques = filtered_torques
             
         if self.enable_disturbance:
+            if self.custom_disturbance_torques_fn is not None:
+                self.disturbance_joint_torque = self.custom_disturbance_torques_fn(self.joint_pos, self.joint_vel, self.joint_accel)
             self.torques += self.disturbance_joint_torque
             
         if self.simulate_stribeck_friction:
