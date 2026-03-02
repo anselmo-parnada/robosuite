@@ -9,6 +9,7 @@ import gymnasium as gym
 from gymnasium import spaces, Env
 
 from robosuite.wrappers import Wrapper
+from gymnasium.utils import seeding
 
 
 class GymWrapper(Wrapper, gym.Env):
@@ -28,9 +29,16 @@ class GymWrapper(Wrapper, gym.Env):
         AssertionError: [Object observations must be enabled if no keys]
     """
 
-    def __init__(self, env, keys=None):
+    def __init__(self, env, keys=None, seed=None):
         # Run super method
         super().__init__(env=env)
+        
+        if seed is None:
+            self._np_random = None
+            self._np_random_seed = None
+        else:
+            self._np_random, self._np_random_seed = seeding.np_random(seed)
+        
         # Create name for gym
         robots = "".join([type(robot.robot_model).__name__ for robot in self.env.robots])
         self.name = robots + "_" + type(self.env).__name__
@@ -95,11 +103,8 @@ class GymWrapper(Wrapper, gym.Env):
         Returns:
             np.array: Flattened environment observation space after reset occurs
         """
-        if seed is not None:
-            if isinstance(seed, int):
-                np.random.seed(seed)
-            else:
-                raise TypeError("Seed must be an integer type!")
+        gym.Env.reset(self, seed=seed, options=options)
+
         ob_dict = self.env.reset()
         return self._flatten_obs(ob_dict), {}
 
