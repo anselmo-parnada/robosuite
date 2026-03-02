@@ -22,3 +22,21 @@ class Peg6Gripper(GripperModel):
     @property
     def init_qpos(self):
         return None
+    
+    @property
+    def _important_geoms(self):
+        """
+        Geoms corresponding to important components of the gripper (by default, left_finger, right_finger,
+        left_fingerpad, right_fingerpad).
+        Note that these are the raw string names directly pulled from a gripper's corresponding XML file,
+        NOT the adjusted name with an auto-generated naming prefix
+
+        Note that this should be a dict of lists.
+
+        Returns:
+            dict of list: Raw XML important geoms, where each set of geoms are grouped as a list and are
+            organized by keyword string entries into a dict
+        """
+        return {
+            "peg_head_collision": ["peg_head_collision"],
+        }
