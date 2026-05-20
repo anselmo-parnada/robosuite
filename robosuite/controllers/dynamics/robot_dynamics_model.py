@@ -6,24 +6,150 @@ import pinocchio # type: ignore
 
 from robosuite.utils.control_utils import inverse_cholesky
 import robosuite.utils.transform_utils as T
+import xml.etree.ElementTree as ET
 
 IDENT_QUAT = np.array([1., 0., 0., 0.], np.float64)
 
-class RoboDynamicsModel:
-    def __init__(self, urdf_fp, armature, ee_link="lbr_link_tcp"):
-        self.parsed_urdf_model = URDF.from_xml_file(urdf_fp) # parsed urdf model for convenience
-        
-        self.model, _, _ = pinocchio.buildModelsFromUrdf(
-            filename=urdf_fp,
-        )
+def extract_robot_subtree(xml_string: str, root_body_name: str) -> str:
+    """
+    Extract ONLY robot kinematics subtree from MJCF:
+    - Keeps bodies, joints, inertials
+    - Removes ALL geoms, cameras, sites
+    - Removes non-robot MJCF sections
+    """
 
+    tree = ET.ElementTree(ET.fromstring(xml_string))
+    root = tree.getroot()
+
+    worldbody = root.find("worldbody")
+    if worldbody is None:
+        raise ValueError("No <worldbody> found in MJCF")
+
+    # ---------------------------
+    # 1. find root body recursively
+    # ---------------------------
+    def find_body(node, name):
+        if node.attrib.get("name") == name:
+            return node
+        for b in node.findall("body"):
+            res = find_body(b, name)
+            if res is not None:
+                return res
+        return None
+
+    target = None
+    for body in worldbody.findall("body"):
+        target = find_body(body, root_body_name)
+        if target is not None:
+            break
+
+    if target is None:
+        raise ValueError(f"Body '{root_body_name}' not found")
+
+    robot = deepcopy(target)
+
+    # ---------------------------
+    # 2. recursive cleanup (IMPORTANT PART)
+    # ---------------------------
+    REMOVE_TAGS = {"geom", "camera", "site", "light"}
+
+    def clean(node):
+        # remove unwanted child elements
+        for tag in REMOVE_TAGS:
+            for child in list(node.findall(tag)):
+                node.remove(child)
+
+        # recurse into bodies
+        for b in node.findall("body"):
+            clean(b)
+
+    clean(robot)
+
+    # ---------------------------
+    # 3. replace worldbody
+    # ---------------------------
+    worldbody.clear()
+    worldbody.append(robot)
+
+    # ---------------------------
+    # 4. strip global MJCF sections
+    # ---------------------------
+    REMOVE_TOPLEVEL = [
+        "asset",
+        "visual",
+        "sensor",
+        "contact",
+        "equality",
+        "compiler",
+        "option",
+        "size",
+        "actuator"
+    ]
+
+    for tag in REMOVE_TOPLEVEL:
+        elem = root.find(tag)
+        if elem is not None:
+            root.remove(elem)
+
+    return ET.tostring(root, encoding="unicode")
+
+def extract_torque_control_limits(xml_path: str):
+    """
+    Extract torque control limits (ctrlrange) from MuJoCo XML.
+
+    Args:
+        xml_path (str): Path to MuJoCo XML file.
+
+    Returns:
+        dict: {actuator_name: (min_torque, max_torque)}
+    """
+    tree = ET.parse(xml_path)
+    root = tree.getroot()
+
+    limits = {}
+
+    for actuator in root.findall(".//actuator/general"):
+        name = actuator.attrib.get("name")
+
+        if "ctrlrange" in actuator.attrib:
+            ctrl_min, ctrl_max = map(float, actuator.attrib["ctrlrange"].split())
+            limits[name] = (ctrl_min, ctrl_max)
+
+    return limits
+
+class RoboDynamicsModel:
+    def __init__(self, urdf_fp, armature, ee_link="gripper0_eef", sim=None):
+        # self.parsed_urdf_model = URDF.from_xml_file(urdf_fp) # parsed urdf model for convenience
+        
+        # self.model, _, _ = pinocchio.buildModelsFromUrdf(
+        #     filename=urdf_fp,
+        # )
+        assert sim is not None, "Must provide sim for RoboDynamicsModel to extract robot subtree and pass to Pinocchio" # TODO: clean up so we only use sim dependency; we keep it like this for now for backwards compatibility with previous projects
+        xml_string = sim.model.get_xml() if sim is not None else None
+        xml_string = extract_robot_subtree(xml_string, "robot0_base")
+    
+            
+        with tempfile.NamedTemporaryFile(
+            mode="w",
+            suffix=".xml",
+            delete=True   # auto cleanup when context exits
+        ) as tmp:
+
+            # write MuJoCo model XML into temp file
+            tmp.write(xml_string)
+            tmp.flush()   # important: force write to disk
+
+            # pass temp file path to Pinocchio
+            self.model, _, _ = pinocchio.buildModelsFromMJCF(
+                filename=tmp.name,
+            )
+            self.torque_limits_ = extract_torque_control_limits(tmp.name)
+            
         self.data = self.model.createData()
         self.ee_link_frame_id = self.model.getFrameId(ee_link)
-        assert np.issubdtype(armature.dtype, np.floating) and np.all(armature >= 0) and armature.size == self.model.nq
+        # assert np.issubdtype(armature.dtype, np.floating) and np.all(armature >= 0) and armature.size == self.model.nq
         
-        self.model.armature[:] = armature[:] 
-
-        self.fetch_joint_friction_and_damping()
+        # self.model.armature[:] = armature[:] 
 
         self.base_pos = None
         self.base_ori = None
@@ -115,22 +241,19 @@ class RoboDynamicsModel:
         np.dot(self.J_bar, self.J_full, out=self.nullspace_matrix)
         np.subtract(eye_temp, self.nullspace_matrix, out=self.nullspace_matrix)
 
-
     @property
     def effort_limits(self):
         lower_limit =  np.array(
             [
-                -joint.limit.effort
-                for joint in self.parsed_urdf_model.joints
-                if joint.joint_type != "fixed"
+                self.torque_limits_[actuator_name][0]
+                for actuator_name in sorted(self.torque_limits_.keys())
             ]
         )
 
         upper_limit =  np.array(
             [
-                joint.limit.effort
-                for joint in self.parsed_urdf_model.joints
-                if joint.joint_type != "fixed"
+                self.torque_limits_[actuator_name][1]
+                for actuator_name in sorted(self.torque_limits_.keys())
             ]
         )
 
@@ -140,52 +263,6 @@ class RoboDynamicsModel:
     def n_dof(self):
         return self.model.nq
     
-    def fetch_joint_friction_and_damping(self):
-        joint_frictions = []
-        joint_dampings = []
-        for joint in self.parsed_urdf_model.joints:
-            if joint.joint_type == "fixed":
-                continue
-
-            joint_frictions.append(joint.dynamics.friction)
-            joint_dampings.append(joint.dynamics.damping)
-
-        self.joint_frictions = np.array(joint_frictions, dtype=np.float64)
-        self.joint_dampings = np.array(joint_dampings, dtype=np.float64)
-    
-    def compute_friction_and_damping_compensation(
-            self, tau, qd, torques_friction, 
-            stiction_positive=np.array([0.0, 0.0, 0.0, 0.0, 0.0, .85, 0.3]), #.15
-            stiction_negative=np.array([0.0, 0.0, 0.0, 0.0, 0., .85, 0.3]) #.3
-        ):
-        tau_sgn = np.sign(tau)
-        qd_sgn = np.sign(qd)
-
-        coulomb_friction_torque = np.multiply(qd_sgn, self.joint_frictions)
-        damping_torque = np.multiply(qd, self.joint_dampings)
-        
-        # not_low_speed_condition = ~np.isclose(qd, 0.0, rtol=1e-20)
-        # zero_cmd_torque_condition = np.isclose(tau, 0.0, rtol=1e-5)
-        # combined_condition = not_low_speed_condition & zero_cmd_torque_condition
-
-        # joint_indices_not_stiction_compensated = np.where(
-        #     combined_condition
-        # )
-        stiction_torque = np.zeros_like(coulomb_friction_torque)
-        stiction_torque[tau > 0.0] = stiction_positive[tau > 0.0]
-        stiction_torque[tau <= 0.0] = stiction_negative[tau <= 0.0]
-        stiction_torque = np.multiply(tau_sgn, stiction_torque)
-        # stiction_torque[joint_indices_not_stiction_compensated] = 0.0
-
-        # stiction_torque[np.abs(qd) > 1e-1] = 0.0
-        print(qd)
-        torques_friction[:] = 0.0
-        np.add(torques_friction, coulomb_friction_torque, out=torques_friction)
-        np.add(torques_friction, damping_torque, out=torques_friction)
-        np.add(torques_friction, stiction_torque, out=torques_friction)
-
-        # torques_friction[np.abs(tau) < 1e-2] = 0.0
-
     def update_base_pose(self, base_pos, base_ori):
         self.base_pos = base_pos
         if not np.isclose(base_ori, IDENT_QUAT).all():

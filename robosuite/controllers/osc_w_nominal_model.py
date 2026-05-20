@@ -137,7 +137,7 @@ class OSCWithNominalModel(OperationalSpaceController):
         uncouple_pos_ori=True,
         stiffness_in_tool_frame=True,
         nominal_model_urdf_fp=None,
-        armature=np.array([0., 0., 0., 0., 0., 0., 0.]),
+        armature=None,
         enable_disturbance=False,
         custom_disturbance_torque_fn=None,
         max_disturbance_torque_mag=0.0,
@@ -148,8 +148,8 @@ class OSCWithNominalModel(OperationalSpaceController):
         np_random = None,
         **kwargs,  # does nothing; used so no error raised when dict is passed with extra terms used previously
     ):
-        assert nominal_model_urdf_fp is not None, "Must provide a nominal model URDF filepath for OSCWithNominalModel"
-        self.nominal_robot_model = RoboDynamicsModel(nominal_model_urdf_fp, armature=armature)
+        # assert nominal_model_urdf_fp is not None, "Must provide a nominal model URDF filepath for OSCWithNominalModel"
+        self.nominal_robot_model = RoboDynamicsModel(nominal_model_urdf_fp, armature=armature, sim=sim)
         
         self.enable_disturbance = enable_disturbance
         self.custom_disturbance_torques_fn = custom_disturbance_torque_fn
